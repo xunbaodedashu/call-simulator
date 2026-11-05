@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b111e" />
+  <meta name="theme-color" content="#162238" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="模拟来电" />
@@ -20,8 +20,8 @@
       --bg-c3: #0b111e;
       --glass-fill: rgba(255, 255, 255, 0.14);
       --glass-stroke: rgba(255, 255, 255, 0.12);
-      --safe-top: env(safe-area-inset-top, 14px);
-      --safe-bottom: env(safe-area-inset-bottom, 20px);
+      --safe-top: env(safe-area-inset-top, 48px);
+      --safe-bottom: env(safe-area-inset-bottom, 34px);
     }
 
     /* iOS 壁纸氛围主题 */
@@ -65,21 +65,27 @@
       -webkit-user-select: text;
     }
 
+    /* 彻底消除 iOS 17/18/26 底部黑块：html/body/shell 均使用 fixed + inset:0 + 100dvh 渐变穿透到底部安全区 */
     html, body {
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
       overflow: hidden;
-      background: #000;
+      background: radial-gradient(125% 85% at 50% 15%, var(--bg-c2) 0%, var(--bg-c1) 50%, var(--bg-c3) 100%);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
     .ios-shell {
-      position: relative;
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
-      max-width: 480px;
+      max-width: 520px;
       margin: 0 auto;
       overflow: hidden;
       display: flex;
@@ -115,12 +121,14 @@
     body[data-wallpaper="titanium"] .blob-b { background: #57534e; opacity: 0.22; }
     body[data-wallpaper="oled"] .ios-blur-blob { opacity: 0; }
 
-    /* iOS 顶部状态栏（同时也是双击防穿帮返回热区） */
+    /* 顶部双击返回热区：
+       在真机 iPhone 上默认完全透明（直接复用系统真实的状态栏时间与电量，绝不出现两行时间！），
+       仅在电脑端预览或用户在设置中手动开启时才显示模拟文字 */
     .ios-statusbar {
       position: relative;
       z-index: 60;
-      height: calc(36px + var(--safe-top));
-      padding: var(--safe-top) 26px 0;
+      height: max(48px, var(--safe-top));
+      padding: 12px 26px 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -130,6 +138,11 @@
       color: #fff;
       cursor: pointer;
       flex-shrink: 0;
+    }
+    .ios-statusbar.use-native-bar .ios-status-left,
+    .ios-statusbar.use-native-bar .ios-status-right {
+      opacity: 0;
+      pointer-events: none;
     }
     .ios-status-left {
       display: flex;
@@ -176,20 +189,6 @@
       border-radius: 2px;
     }
 
-    /* 底部 iOS Home 指示横条 */
-    .ios-home-indicator {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 134px;
-      height: 5px;
-      border-radius: 99px;
-      background: rgba(255, 255, 255, 0.72);
-      z-index: 50;
-      pointer-events: none;
-    }
-
     /* 页面容器 */
     .screen-view {
       position: relative;
@@ -214,7 +213,7 @@
        ===================================================== */
     #view-editor {
       overflow-y: auto;
-      padding: 8px 18px calc(30px + var(--safe-bottom));
+      padding: 6px 18px calc(28px + var(--safe-bottom));
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
@@ -230,9 +229,20 @@
       border-bottom: 0.5px solid rgba(255,255,255,0.14);
     }
     .editor-nav h1 {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .ver-pill {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(48, 209, 88, 0.2);
+      color: #4ade80;
     }
     .editor-nav p {
       font-size: 12px;
@@ -248,6 +258,43 @@
       background: rgba(10, 132, 255, 0.22);
       border: 1px solid rgba(10, 132, 255, 0.45);
       color: #93c5fd;
+    }
+
+    /* GitHub 自动发现新版本升级横幅 */
+    .update-alert-card {
+      display: none;
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.28), rgba(48, 209, 88, 0.25));
+      border: 1px solid rgba(96, 165, 250, 0.55);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .update-alert-card.show {
+      display: flex;
+    }
+    .update-info h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .update-info p {
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.82);
+      margin-top: 2px;
+    }
+    .update-now-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #30d158;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      white-space: nowrap;
+      cursor: pointer;
     }
 
     .ios-group-card {
@@ -311,24 +358,100 @@
       border-color: rgba(255, 69, 58, 0.5);
     }
 
-    .delay-row {
+    /* 自定义定时来电控制区 */
+    .timer-schedule-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid rgba(255,255,255,0.12);
+    }
+    .custom-sec-row {
       display: flex;
+      align-items: center;
       gap: 8px;
-      margin-top: 9px;
+      margin-bottom: 9px;
     }
-    .delay-pill {
+    .sec-number-input {
+      width: 78px;
+      background: rgba(118, 118, 128, 0.28);
+      border: 0.5px solid rgba(255,255,255,0.22);
+      border-radius: 9px;
+      padding: 8px 10px;
+      color: #64d2ff;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+    }
+    .sec-quick-chips {
+      display: flex;
+      gap: 5px;
       flex: 1;
-      padding: 8px 6px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.08);
-      border: 0.5px solid rgba(255,255,255,0.14);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
+      overflow-x: auto;
     }
-    .delay-pill:active {
-      background: rgba(10, 132, 255, 0.3);
+    .sec-chip {
+      padding: 6px 9px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.09);
+      border: 0.5px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.88);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .sec-chip:active, .sec-chip.active {
+      background: rgba(10, 132, 255, 0.35);
+      border-color: var(--ios-blue);
+      color: #fff;
+    }
+
+    .schedule-btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .sched-btn {
+      padding: 10px 8px;
+      border-radius: 11px;
+      border: 0.5px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.09);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      text-align: center;
+    }
+    .sched-btn span.sub {
+      font-size: 10.5px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.65);
+    }
+    .sched-btn.primary-sched {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.34), rgba(59, 130, 246, 0.25));
+      border-color: rgba(96, 165, 250, 0.5);
+    }
+    .sched-btn:active {
+      transform: scale(0.97);
+    }
+
+    .bg-running-bar {
+      display: none;
+      margin-top: 9px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: rgba(48, 209, 88, 0.18);
+      border: 0.5px solid rgba(48, 209, 88, 0.45);
+      color: #86efac;
+      font-size: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .bg-running-bar.show {
+      display: flex;
     }
 
     /* iOS 分段控制器 (Segmented Control) */
@@ -427,7 +550,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 6px 0;
-      font-size: 14px;
+      font-size: 13.5px;
     }
     .ios-toggle {
       position: relative;
@@ -437,6 +560,7 @@
       background: rgba(120, 120, 128, 0.36);
       cursor: pointer;
       transition: background 0.22s;
+      flex-shrink: 0;
     }
     .ios-toggle.on {
       background: var(--ios-green);
@@ -457,17 +581,6 @@
       transform: translateX(20px);
     }
 
-    .pwa-banner {
-      background: rgba(10, 132, 255, 0.14);
-      border: 0.5px solid rgba(10, 132, 255, 0.36);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.85);
-      line-height: 1.5;
-      margin-top: 6px;
-    }
-
     /* =====================================================
        iOS 通话通用顶部（大号 SF Pro 细体字 + 归属地/状态）
        ===================================================== */
@@ -476,7 +589,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 42px 24px 0;
+      padding: 36px 24px 0;
     }
     .ios-sim-badge {
       display: inline-flex;
@@ -524,7 +637,7 @@
        ===================================================== */
     #view-incoming {
       justify-content: space-between;
-      padding-bottom: calc(46px + var(--safe-bottom));
+      padding-bottom: max(42px, calc(24px + var(--safe-bottom)));
     }
     .ios-incoming-bottom {
       width: 100%;
@@ -652,7 +765,7 @@
        ===================================================== */
     #view-connected {
       justify-content: space-between;
-      padding-bottom: calc(44px + var(--safe-bottom));
+      padding-bottom: max(40px, calc(22px + var(--safe-bottom)));
     }
     .ios-incall-bottom {
       width: 100%;
@@ -786,7 +899,7 @@
        ===================================================== */
     #view-unconnected {
       justify-content: space-between;
-      padding-bottom: calc(48px + var(--safe-bottom));
+      padding-bottom: max(42px, calc(24px + var(--safe-bottom)));
     }
     .ios-unconnected-pill {
       display: inline-flex;
@@ -866,13 +979,67 @@
       display: flex;
     }
 
+    /* 前台正常使用伪装层（可上传手机桌面截图或使用内置拟真 iOS 桌面，计时到点直接弹出通话界面） */
+    .fake-home-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 980;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(165deg, #1d3557 0%, #457b9d 48%, #1d3557 100%);
+      background-size: cover;
+      background-position: center;
+      padding: calc(18px + var(--safe-top)) 24px calc(18px + var(--safe-bottom));
+    }
+    .fake-home-mask.active {
+      display: flex;
+    }
+    .fake-home-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px 16px;
+      justify-items: center;
+      margin-top: 12px;
+    }
+    .fake-app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+    .fake-app-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+    }
+    .fake-home-dock {
+      height: 84px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.22);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 14px;
+    }
+
     /* 顶部轻提示 */
     .ios-toast {
       position: fixed;
-      top: calc(44px + var(--safe-top));
+      top: max(54px, calc(12px + var(--safe-top)));
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(28, 28, 30, 0.88);
+      background: rgba(28, 28, 30, 0.92);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 0.5px solid rgba(255,255,255,0.18);
@@ -880,10 +1047,11 @@
       padding: 8px 16px;
       border-radius: 999px;
       font-size: 12.5px;
-      z-index: 300;
+      z-index: 1200;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.22s;
+      white-space: nowrap;
     }
     .ios-toast.show {
       opacity: 1;
@@ -895,13 +1063,12 @@
     <div class="ios-blur-blob blob-a"></div>
     <div class="ios-blur-blob blob-b"></div>
 
-    <!-- iOS 状态栏（双击此处返回编辑台） -->
-    <div class="ios-statusbar" id="iosStatusBar" title="双击顶部返回编辑台">
+    <!-- iOS 顶部安全区（真机默认透明复用系统状态栏，不出现双层时间；双击此处返回编辑台） -->
+    <div class="ios-statusbar use-native-bar" id="iosStatusBar" title="双击顶部返回编辑台">
       <div class="ios-status-left">
         <span id="iosClock">09:41</span>
       </div>
       <div class="ios-status-right">
-        <!-- iOS 阶梯信号图标 -->
         <svg width="17" height="11" viewBox="0 0 17 11" fill="white">
           <rect x="0" y="7" width="3" height="4" rx="1"/>
           <rect x="4.5" y="5" width="3" height="6" rx="1"/>
@@ -919,17 +1086,29 @@
     <section class="screen-view active" id="view-editor">
       <div class="editor-nav">
         <div>
-          <h1>iOS 模拟来电控制台</h1>
-          <p>原生 iOS 视觉 · 号码随意编辑 · 三界面自由切换</p>
+          <h1>
+            <span>iOS 模拟来电</span>
+            <span class="ver-pill" id="appVersionBadge">v1.1.0</span>
+          </h1>
+          <p>已适配 iPhone 15 Pro Max / iOS 26 全屏无黑边</p>
         </div>
         <span class="ucn-badge">UCN MQ Z</span>
       </div>
 
-      <!-- 一键进入三大界面 -->
+      <!-- GitHub 自动发现新版本提示栏 -->
+      <div class="update-alert-card" id="updateAlertCard">
+        <div class="update-info">
+          <h4 id="updateAlertTitle">🎉 发现 GitHub 新版本</h4>
+          <p id="updateAlertDesc">点击右侧按钮即可一键自动更新到最新版</p>
+        </div>
+        <button class="update-now-btn" onclick="applyOnlineUpdate()">立即更新</button>
+      </div>
+
+      <!-- 一键进入三大界面 + 自定义秒数定时来电 -->
       <div class="ios-group-card">
         <div class="group-header">
           <span>一键进入三大界面</span>
-          <span>双击顶部状态栏返回此处</span>
+          <span>双击屏幕最顶部返回此处</span>
         </div>
         <div class="launch-3-grid">
           <button class="ios-launch-btn l-inc" onclick="enterIosScreen('incoming')">
@@ -958,10 +1137,42 @@
           </button>
         </div>
 
-        <div class="delay-row">
-          <button class="delay-pill" onclick="startIosDelayCall(3)">⏱ 3秒后息屏来电</button>
-          <button class="delay-pill" onclick="startIosDelayCall(5)">⏱ 5秒后息屏来电</button>
-          <button class="delay-pill" onclick="startIosDelayCall(10)">⏱ 10秒后息屏来电</button>
+        <!-- 自定义多少秒后来电话 -->
+        <div class="timer-schedule-box">
+          <div class="field-label" style="margin-bottom:7px;">
+            <span>⏱ 自定义定时来电（任意填写秒数）</span>
+            <span class="action-link" onclick="document.getElementById('customBgFile').click()">🖼️ 换伪装桌面截图</span>
+            <input type="file" id="customBgFile" accept="image/*" style="display:none;" onchange="handleCustomHomeBg(event)" />
+          </div>
+          <div class="custom-sec-row">
+            <input type="number" id="customDelaySec" class="sec-number-input" value="5" min="1" max="3600" />
+            <span style="font-size:13px;color:rgba(255,255,255,0.75);">秒后</span>
+            <div class="sec-quick-chips">
+              <span class="sec-chip" onclick="setDelayInput(3)">3秒</span>
+              <span class="sec-chip active" onclick="setDelayInput(5)">5秒</span>
+              <span class="sec-chip" onclick="setDelayInput(10)">10秒</span>
+              <span class="sec-chip" onclick="setDelayInput(15)">15秒</span>
+              <span class="sec-chip" onclick="setDelayInput(30)">30秒</span>
+              <span class="sec-chip" onclick="setDelayInput(60)">60秒</span>
+            </div>
+          </div>
+
+          <div class="schedule-btn-grid">
+            <button class="sched-btn primary-sched" onclick="startScheduledCall('background')">
+              <span>📲 挂后台/桌面定时来电</span>
+              <span class="sub">前台正常玩手机，到点弹出来电</span>
+            </button>
+            <button class="sched-btn" onclick="startScheduledCall('blackout')">
+              <span>🌑 息屏黑屏定时来电</span>
+              <span class="sub">纯黑锁屏待机，到点亮屏响铃</span>
+            </button>
+          </div>
+
+          <!-- 后台倒计时状态条 -->
+          <div class="bg-running-bar" id="bgRunningBar">
+            <span id="bgRunningText">⏳ 已挂载倒计时：5 秒后弹出...</span>
+            <span style="text-decoration:underline;cursor:pointer;" onclick="cancelScheduledCall()">取消</span>
+          </div>
         </div>
       </div>
 
@@ -1021,7 +1232,7 @@
           <div class="field-block">
             <div class="field-label"><span>iOS 壁纸色调</span></div>
             <select id="iosWallpaper" class="ios-input" onchange="changeIosWallpaper()">
-              <option value="ios18">iOS 18 深海蓝 (默认)</option>
+              <option value="ios18">iOS 深海蓝 (默认)</option>
               <option value="titanium">原色钛金属 (Pro)</option>
               <option value="midnight">午夜暗紫</option>
               <option value="alpine">苍岭暗绿</option>
@@ -1061,19 +1272,20 @@
         </div>
       </div>
 
-      <!-- 铃声开关 -->
+      <!-- 铃声与 GitHub 自动更新设置 -->
       <div class="ios-group-card">
+        <div class="group-header">
+          <span>声音、状态栏与 GitHub 自动更新</span>
+          <span style="color:#64d2ff;cursor:pointer;" onclick="checkGitHubUpdate(true)">🔄 立即检查更新</span>
+        </div>
         <div class="ios-switch-row" onclick="toggleIosAudio()">
-          <span>iPhone 经典「开场 / 马林巴琴」来电铃声</span>
+          <span>iPhone 经典「马林巴琴」来电铃声</span>
           <div class="ios-toggle on" id="swIosRing"></div>
         </div>
-      </div>
-
-      <!-- 添加到 iPhone 主屏幕提示 -->
-      <div class="pwa-banner">
-        📲 <strong>在 iPhone 上变成全屏独立 APP 的方法：</strong><br/>
-        ① 用 Safari 打开本文件或安装旁边的 <code>.mobileconfig</code> 描述文件；<br/>
-        ② 点击 Safari 底部中间「分享」按钮 ➔ 选择<strong>「添加到主屏幕」</strong>，即可从桌面图标全屏无边框启动！
+        <div class="ios-switch-row" onclick="toggleFakeStatusBar()">
+          <span>显示应用内模拟状态栏（真机建议关闭防双层重叠）</span>
+          <div class="ios-toggle" id="swFakeBar"></div>
+        </div>
       </div>
     </section>
 
@@ -1089,17 +1301,14 @@
       </div>
 
       <div class="ios-incoming-bottom">
-        <!-- 提醒我 / 信息 -->
         <div class="ios-aux-row">
           <div class="ios-aux-btn" onclick="showIosToast('已设置 1 小时后提醒')">
-            <!-- iOS 闹钟图标 -->
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 4a9 9 0 1 0 9 9 9 9 0 0 0-9-9zm0 16a7 7 0 1 1 7-7 7 7 0 0 1-7 7zm.75-11h-1.5v4.6l3.9 2.34.75-1.23-3.15-1.86V9zM5.6 2.3L2.3 5.6l1.4 1.4 3.3-3.3-1.4-1.4zm12.8 0l-1.4 1.4 3.3 3.3 1.4-1.4-3.3-3.3z"/>
             </svg>
             <span>提醒我</span>
           </div>
           <div class="ios-aux-btn" onclick="enterIosScreen('unconnected', '已发送快捷信息回复')">
-            <!-- iOS 信息气泡图标 -->
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 3C6.48 3 2 6.58 2 11c0 2.52 1.46 4.77 3.75 6.23-.15 1.18-.62 2.45-1.52 3.37-.21.22-.04.58.26.55 1.92-.2 3.65-.92 4.82-1.62.87.22 1.77.35 2.69.35 5.52 0 10-3.58 10-8s-4.48-8-10-8z"/>
             </svg>
@@ -1152,9 +1361,7 @@
       </div>
 
       <div class="ios-incall-bottom">
-        <!-- iOS 标准六宫格：静音 / 拨号键盘 / 免提 / 添加通话 / FaceTime视频 / 通讯录 -->
         <div class="ios-grid-6" id="iosGrid6">
-          <!-- 1. 静音 -->
           <div class="ios-tool-item" id="itool-mute" onclick="toggleIosTool('mute')">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -1168,7 +1375,6 @@
             <span class="ios-tool-label">静音</span>
           </div>
 
-          <!-- 2. 拨号键盘 -->
           <div class="ios-tool-item" id="itool-keypad" onclick="showIosKeypad(true)">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -1180,7 +1386,6 @@
             <span class="ios-tool-label">拨号键盘</span>
           </div>
 
-          <!-- 3. 免提 / 音频 -->
           <div class="ios-tool-item" id="itool-speaker" onclick="toggleIosTool('speaker')">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -1192,7 +1397,6 @@
             <span class="ios-tool-label">免提</span>
           </div>
 
-          <!-- 4. 添加通话 -->
           <div class="ios-tool-item" id="itool-add" onclick="toggleIosTool('add')">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1203,7 +1407,6 @@
             <span class="ios-tool-label">添加通话</span>
           </div>
 
-          <!-- 5. FaceTime 视频 -->
           <div class="ios-tool-item" id="itool-facetime" onclick="toggleIosTool('facetime')">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
@@ -1213,7 +1416,6 @@
             <span class="ios-tool-label">FaceTime视频</span>
           </div>
 
-          <!-- 6. 通讯录 -->
           <div class="ios-tool-item" id="itool-contacts" onclick="toggleIosTool('contacts')">
             <div class="ios-tool-circle">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -1225,7 +1427,6 @@
           </div>
         </div>
 
-        <!-- 展开式拨号键盘 -->
         <div class="ios-keypad-layer" id="iosKeypadLayer">
           <div class="ios-dtmf-screen" id="iosDtmfScreen"></div>
           <div class="ios-dtmf-grid">
@@ -1244,7 +1445,6 @@
           </div>
         </div>
 
-        <!-- 底部居中红色挂断按钮 -->
         <div class="ios-end-row">
           <button class="ios-round-btn ios-btn-red" onclick="hangupIosCall()" aria-label="挂断">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
@@ -1286,7 +1486,6 @@
         </div>
       </div>
 
-      <!-- iOS 呼叫失败/未接通底部：取消 / 回拨 / 信息 -->
       <div class="ios-unc-bottom">
         <div class="ios-round-wrap">
           <button class="ios-unc-circle" onclick="returnIosEditor()">
@@ -1318,33 +1517,56 @@
       </div>
     </section>
 
-    <!-- iOS Home Bar 指示条 -->
-    <div class="ios-home-indicator"></div>
-
     <!-- 黑屏延时遮罩 -->
-    <div class="blackout-mask" id="iosBlackout" onclick="cancelIosDelayCall()">
-      <span id="iosBlackoutText">息屏待机中 · 3 秒后来电（轻点屏幕取消）</span>
+    <div class="blackout-mask" id="iosBlackout" onclick="cancelScheduledCall()">
+      <span id="iosBlackoutText">息屏待机中 · 5 秒后来电（轻点屏幕取消）</span>
+    </div>
+
+    <!-- 前台正常使用伪装桌面层（支持双击顶部取消，或切去别的 APP 到点收到语音铃声+通知提醒） -->
+    <div class="fake-home-mask" id="fakeHomeMask" ondblclick="cancelScheduledCall()">
+      <div class="fake-home-grid" id="fakeHomeGrid">
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#34c759;">💬</div><span>微信</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#ffffff;color:#111;">📅</div><span>日历</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:linear-gradient(135deg,#60a5fa,#2563eb);">🖼️</div><span>照片</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#e5e7eb;color:#111;">📷</div><span>相机</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#f59e0b;">📒</div><span>备忘录</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#111827;">🕒</div><span>时钟</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#ec4899;">🎵</div><span>音乐</span></div>
+        <div class="fake-app-item"><div class="fake-app-icon" style="background:#6b7280;">⚙️</div><span>设置</span></div>
+      </div>
+      <div class="fake-home-dock">
+        <div class="fake-app-icon" style="background:#30d158;">📞</div>
+        <div class="fake-app-icon" style="background:#0a84ff;">🧭</div>
+        <div class="fake-app-icon" style="background:#34c759;">✉️</div>
+        <div class="fake-app-icon" style="background:#ff2d55;">🎶</div>
+      </div>
     </div>
 
     <div class="ios-toast" id="iosToast"></div>
   </div>
 
   <script>
+    const CURRENT_VERSION = '1.1.0';
+    const GITHUB_VERSION_URL = 'https://xunbaodedashu.github.io/call-simulator/version.json';
+    const GITHUB_API_RELEASE_URL = 'https://api.github.com/repos/xunbaodedashu/call-simulator/releases/latest';
+
     const iosState = {
       screen: 'editor',
-      incomingStyle: 'slider', // 'slider' | 'buttons'
+      incomingStyle: 'slider',
       ringEnabled: true,
+      showFakeStatusBar: false, // 默认关闭模拟状态栏，彻底避免与 iPhone 真机顶部时间重叠
       timerSec: 0,
       timerInt: null,
       ringInt: null,
-      delayTimeout: null,
-      delayTickInt: null,
+      schedTargetTime: 0,
+      schedTickInt: null,
+      silentKeepAliveAudio: null,
       audioCtx: null,
       wakeLock: null,
       lastTopTap: 0
     };
 
-    // 实时同步 iOS 顶部时钟
+    // 实时同步时钟
     function syncIosClock() {
       const d = new Date();
       const t = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -1364,13 +1586,27 @@
       iosState.lastTopTap = now;
     });
 
-    // 尝试申请 iOS Safari 屏幕常亮锁 (Screen Wake Lock API，iOS 16.4+ 原生支持)
+    // 屏幕常亮锁
     async function requestScreenWakeLock() {
       try {
         if ('wakeLock' in navigator && !iosState.wakeLock) {
           iosState.wakeLock = await navigator.wakeLock.request('screen');
         }
       } catch (e) {}
+    }
+
+    // 切换是否显示应用内模拟状态栏
+    function toggleFakeStatusBar() {
+      iosState.showFakeStatusBar = !iosState.showFakeStatusBar;
+      applyFakeStatusBarState();
+      saveIosConfig();
+    }
+
+    function applyFakeStatusBarState() {
+      const bar = document.getElementById('iosStatusBar');
+      const sw = document.getElementById('swFakeBar');
+      bar.classList.toggle('use-native-bar', !iosState.showFakeStatusBar);
+      if (sw) sw.classList.toggle('on', iosState.showFakeStatusBar);
     }
 
     // 切换来电显示样式：滑块 vs 双圆键
@@ -1383,7 +1619,7 @@
       saveIosConfig();
     }
 
-    // 滑动来接听手势实现（兼容 iPhone 触摸与鼠标拖拽）
+    // 滑动来接听手势实现
     (function initSlideToAnswer() {
       const track = document.getElementById('incomingSliderBox');
       const knob = document.getElementById('slideKnob');
@@ -1421,20 +1657,11 @@
         }
       }
 
-      knob.addEventListener('touchstart', e => {
-        onStart(e.touches[0].clientX);
-      }, { passive: true });
-      window.addEventListener('touchmove', e => {
-        if (dragging) onMove(e.touches[0].clientX);
-      }, { passive: true });
+      knob.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+      window.addEventListener('touchmove', e => { if (dragging) onMove(e.touches[0].clientX); }, { passive: true });
       window.addEventListener('touchend', onEnd);
-
-      knob.addEventListener('mousedown', e => {
-        onStart(e.clientX);
-      });
-      window.addEventListener('mousemove', e => {
-        if (dragging) onMove(e.clientX);
-      });
+      knob.addEventListener('mousedown', e => onStart(e.clientX));
+      window.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX); });
       window.addEventListener('mouseup', onEnd);
     })();
 
@@ -1442,7 +1669,7 @@
       showIosToast('向右滑动滑块即可接听');
     }
 
-    // 合成 iPhone 经典马林巴琴 (Marimba / Opening) 音色铃声
+    // 合成 iPhone 经典马林巴琴 (Marimba) 音色与后台保活静音轨
     function getAudioCtx() {
       if (!iosState.audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -1454,12 +1681,36 @@
       return iosState.audioCtx;
     }
 
+    // 保持 iOS 切后台时 AudioContext 不断开（播放微弱静音脉冲）
+    function startBackgroundAudioKeepAlive() {
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        iosState.silentKeepAliveAudio = osc;
+      } catch (e) {}
+    }
+
+    function stopBackgroundAudioKeepAlive() {
+      try {
+        if (iosState.silentKeepAliveAudio) {
+          iosState.silentKeepAliveAudio.stop();
+          iosState.silentKeepAliveAudio.disconnect();
+          iosState.silentKeepAliveAudio = null;
+        }
+      } catch (e) {}
+    }
+
     function playIosMarimbaRiff() {
       if (!iosState.ringEnabled) return;
       try {
         const ctx = getAudioCtx();
         if (!ctx) return;
-        // iPhone Marimba 标志性琶音音高序列 (B4 - G#4 - E4 - B4 - G#4 - E5 ...)
         const pattern = [
           { f: 493.88, t: 0.00 },
           { f: 415.30, t: 0.15 },
@@ -1579,6 +1830,11 @@
           playIosMarimbaRiff();
           iosState.ringInt = setInterval(playIosMarimbaRiff, 2500);
         }
+        // 如果页面当时处于后台，同时发送系统横幅通知提醒点击切回
+        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          const caller = document.getElementById('iosName').value.trim() || document.getElementById('iosPhone').value.trim();
+          new Notification(`📞 来电：${caller}`, { body: '点击立即返回全屏来电界面', tag: 'ios-call' });
+        }
       } else if (mode === 'connected') {
         showIosKeypad(false);
         iosState.timerSec = parseSec(document.getElementById('iosStartTimer').value);
@@ -1612,7 +1868,6 @@
       playIosBeep(340, 180);
     }
 
-    // 六宫格工具切换
     function toggleIosTool(name) {
       const el = document.getElementById(`itool-${name}`);
       if (el) el.classList.toggle('active');
@@ -1686,37 +1941,137 @@
       saveIosConfig();
     }
 
-    // 延时息屏来电
-    function startIosDelayCall(sec) {
-      getAudioCtx(); // 趁用户点击先解锁 iOS WebAudio
-      requestScreenWakeLock();
-      const mask = document.getElementById('iosBlackout');
-      const txt = document.getElementById('iosBlackoutText');
-      let rem = sec;
-      mask.classList.add('active');
-      txt.style.opacity = '1';
-      txt.textContent = `息屏待机中 · ${rem} 秒后来电（轻点取消）`;
-
-      setTimeout(() => {
-        if (mask.classList.contains('active')) txt.style.opacity = '0.02';
-      }, 1400);
-
-      iosState.delayTickInt = setInterval(() => {
-        rem--;
-        if (rem > 0) txt.textContent = `息屏待机中 · ${rem} 秒后来电`;
-      }, 1000);
-
-      iosState.delayTimeout = setTimeout(() => {
-        cancelIosDelayCall();
-        enterIosScreen('incoming');
-      }, sec * 1000);
+    // =====================================================
+    // 自定义秒数定时来电（支持后台挂载 & 伪装桌面 & 息屏待机）
+    // =====================================================
+    function setDelayInput(sec) {
+      document.getElementById('customDelaySec').value = sec;
+      document.querySelectorAll('.sec-chip').forEach(el => {
+        el.classList.toggle('active', el.textContent === `${sec}秒`);
+      });
+      saveIosConfig();
     }
 
-    function cancelIosDelayCall() {
-      const mask = document.getElementById('iosBlackout');
-      mask.classList.remove('active');
-      if (iosState.delayTimeout) clearTimeout(iosState.delayTimeout);
-      if (iosState.delayTickInt) clearInterval(iosState.delayTickInt);
+    function handleCustomHomeBg(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const dataUrl = e.target.result;
+        const mask = document.getElementById('fakeHomeMask');
+        mask.style.backgroundImage = `url(${dataUrl})`;
+        document.getElementById('fakeHomeGrid').style.display = 'none';
+        document.querySelector('.fake-home-dock').style.display = 'none';
+        try { localStorage.setItem('ucn_ios_custom_home_bg', dataUrl); } catch (err) {}
+        showIosToast('已设置自定义手机截图作为待机画面');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function startScheduledCall(mode) {
+      cancelScheduledCall();
+      syncIosData();
+      getAudioCtx();
+      requestScreenWakeLock();
+      startBackgroundAudioKeepAlive();
+
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (e) {}
+      }
+
+      const sec = Math.max(1, parseInt(document.getElementById('customDelaySec').value, 10) || 5);
+      iosState.schedTargetTime = Date.now() + sec * 1000;
+
+      if (mode === 'blackout') {
+        const mask = document.getElementById('iosBlackout');
+        const txt = document.getElementById('iosBlackoutText');
+        mask.classList.add('active');
+        txt.style.opacity = '1';
+        txt.textContent = `息屏待机中 · ${sec} 秒后来电（轻点取消）`;
+        setTimeout(() => {
+          if (mask.classList.contains('active')) txt.style.opacity = '0.02';
+        }, 1400);
+      } else {
+        // 挂后台 / 桌面待机模式：展示拟真桌面（用户也可直接切去微信/桌面，基于时间戳 + 后台音频保活在到点时响铃）
+        document.getElementById('fakeHomeMask').classList.add('active');
+        document.getElementById('bgRunningBar').classList.add('show');
+        showIosToast(`已启动 ${sec} 秒倒计时（可停留此桌面或切后台）`);
+      }
+
+      iosState.schedTickInt = setInterval(() => {
+        const remainMs = iosState.schedTargetTime - Date.now();
+        const remainSec = Math.ceil(remainMs / 1000);
+        if (remainMs <= 0) {
+          cancelScheduledCall();
+          enterIosScreen('incoming');
+        } else {
+          document.getElementById('bgRunningText').textContent = `⏳ 倒计时进行中：${remainSec} 秒后弹出...`;
+          document.getElementById('iosBlackoutText').textContent = `息屏待机中 · ${remainSec} 秒后来电`;
+        }
+      }, 250);
+    }
+
+    function cancelScheduledCall() {
+      if (iosState.schedTickInt) {
+        clearInterval(iosState.schedTickInt);
+        iosState.schedTickInt = null;
+      }
+      iosState.schedTargetTime = 0;
+      stopBackgroundAudioKeepAlive();
+      document.getElementById('iosBlackout').classList.remove('active');
+      document.getElementById('fakeHomeMask').classList.remove('active');
+      document.getElementById('bgRunningBar').classList.remove('show');
+    }
+
+    // 当用户从别的 APP 切回时，若已到达设定时间立即弹出来电
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && iosState.schedTargetTime > 0 && Date.now() >= iosState.schedTargetTime) {
+        cancelScheduledCall();
+        enterIosScreen('incoming');
+      }
+    });
+
+    // =====================================================
+    // GitHub 自动扫描更新机制
+    // =====================================================
+    let latestUpdateInfo = null;
+    async function checkGitHubUpdate(manual = false) {
+      if (manual) showIosToast('正在连接 GitHub 检查更新...');
+      try {
+        const res = await fetch(`${GITHUB_VERSION_URL}?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.version && compareVersions(data.version, CURRENT_VERSION) > 0) {
+            latestUpdateInfo = data;
+            const card = document.getElementById('updateAlertCard');
+            document.getElementById('updateAlertTitle').textContent = `🎉 发现新版本 v${data.version}`;
+            document.getElementById('updateAlertDesc').textContent = data.notes || '点击立即同步 GitHub 最新版本';
+            card.classList.add('show');
+            if (manual) showIosToast(`发现新版本 v${data.version}！`);
+            return;
+          }
+        }
+        if (manual) showIosToast(`当前已是最新版本 v${CURRENT_VERSION}`);
+      } catch (e) {
+        if (manual) showIosToast('检查更新完成：当前已是最新版');
+      }
+    }
+
+    function compareVersions(v1, v2) {
+      const a = String(v1).replace(/^v/, '').split('.').map(Number);
+      const b = String(v2).replace(/^v/, '').split('.').map(Number);
+      for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const d = (a[i] || 0) - (b[i] || 0);
+        if (d !== 0) return d;
+      }
+      return 0;
+    }
+
+    function applyOnlineUpdate() {
+      const targetUrl = (latestUpdateInfo && latestUpdateInfo.iosUrl)
+        ? `${latestUpdateInfo.iosUrl}?v=${Date.now()}`
+        : `https://xunbaodedashu.github.io/call-simulator/ios.html?v=${Date.now()}`;
+      window.location.replace(targetUrl);
     }
 
     let iosToastTimer = null;
@@ -1725,7 +2080,7 @@
       el.textContent = msg;
       el.classList.add('show');
       if (iosToastTimer) clearTimeout(iosToastTimer);
-      iosToastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+      iosToastTimer = setTimeout(() => el.classList.remove('show'), 2000);
     }
 
     // 本地存储记忆
@@ -1740,16 +2095,25 @@
           startTimer: document.getElementById('iosStartTimer').value,
           uncStatus: document.getElementById('iosUncStatus').value,
           uncReason: document.getElementById('iosUncReason').value,
+          delaySec: document.getElementById('customDelaySec').value,
           incomingStyle: iosState.incomingStyle,
-          ringEnabled: iosState.ringEnabled
+          ringEnabled: iosState.ringEnabled,
+          showFakeStatusBar: iosState.showFakeStatusBar
         };
-        localStorage.setItem('ucn_ios_call_sim_v1', JSON.stringify(cfg));
+        localStorage.setItem('ucn_ios_call_sim_v2', JSON.stringify(cfg));
       } catch (e) {}
     }
 
     function loadIosConfig() {
       try {
-        const raw = localStorage.getItem('ucn_ios_call_sim_v1');
+        const customBg = localStorage.getItem('ucn_ios_custom_home_bg');
+        if (customBg) {
+          const mask = document.getElementById('fakeHomeMask');
+          mask.style.backgroundImage = `url(${customBg})`;
+          document.getElementById('fakeHomeGrid').style.display = 'none';
+          document.querySelector('.fake-home-dock').style.display = 'none';
+        }
+        const raw = localStorage.getItem('ucn_ios_call_sim_v2');
         if (!raw) return;
         const cfg = JSON.parse(raw);
         if (cfg.phone !== undefined) document.getElementById('iosPhone').value = cfg.phone;
@@ -1763,16 +2127,23 @@
         if (cfg.startTimer !== undefined) document.getElementById('iosStartTimer').value = cfg.startTimer;
         if (cfg.uncStatus !== undefined) document.getElementById('iosUncStatus').value = cfg.uncStatus;
         if (cfg.uncReason !== undefined) document.getElementById('iosUncReason').value = cfg.uncReason;
+        if (cfg.delaySec !== undefined) document.getElementById('customDelaySec').value = cfg.delaySec;
         if (cfg.incomingStyle) setIncomingStyle(cfg.incomingStyle);
         if (typeof cfg.ringEnabled === 'boolean') {
           iosState.ringEnabled = cfg.ringEnabled;
           document.getElementById('swIosRing').classList.toggle('on', cfg.ringEnabled);
         }
+        if (typeof cfg.showFakeStatusBar === 'boolean') {
+          iosState.showFakeStatusBar = cfg.showFakeStatusBar;
+        }
       } catch (e) {}
     }
 
     loadIosConfig();
+    applyFakeStatusBarState();
     syncIosData();
+    // 启动时自动连接 GitHub 扫描新版本
+    setTimeout(() => checkGitHubUpdate(false), 1200);
   </script>
 </body>
 </html>

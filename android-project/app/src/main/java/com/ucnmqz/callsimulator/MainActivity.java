@@ -2,10 +2,16 @@ package com.ucnmqz.callsimulator;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.KeyEvent;
@@ -23,17 +29,25 @@ public class MainActivity extends Activity implements Runnable {
 
     private WebView webView;
     private Vibrator vibrator;
+    private Handler mainHandler;
+    private PowerManager.WakeLock bgWakeLock;
     private volatile boolean isCallScreenImmersive = false;
+    private volatile boolean pendingWakeUpCall = false;
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mainHandler = new Handler(Looper.getMainLooper());
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         Window window = getWindow();
         if (window != null) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            window.addFlags(
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                            | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                            | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            );
             window.setStatusBarColor(Color.parseColor("#090D16"));
             window.setNavigationBarColor(Color.parseColor("#090D16"));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -73,11 +87,17 @@ public class MainActivity extends Activity implements Runnable {
 
     public void applyImmersiveMode(boolean immersive) {
         isCallScreenImmersive = immersive;
-        runOnUiThread(this);
+        pendingWakeUpCall = false;
+        mainHandler.post(this);
     }
 
     @Override
     public void run() {
+        if (pendingWakeUpCall) {
+            pendingWakeUpCall = false;
+            bringActivityToFrontAndRing();
+            return;
+        }
         Window window = getWindow();
         if (window == null) return;
         View decorView = window.getDecorView();
@@ -92,6 +112,88 @@ public class MainActivity extends Activity implements Runnable {
             );
         } else {
             decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
+    }
+
+    @SuppressLint("WakelockTimeout")
+    public void scheduleBackgroundWakeUp(int seconds) {
+        cancelBackgroundWakeUp();
+        int delayMs = Math.max(1, seconds) * 1000;
+        try {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                bgWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "UCNCallSim::BgTimer");
+                bgWakeLock.acquire(delayMs + 10000L);
+            }
+        } catch (Exception ignored) {
+        }
+
+        pendingWakeUpCall = true;
+        mainHandler.postDelayed(this, delayMs);
+
+        // 将本应用退回后台，让用户在手机前台正常刷其他软件或停留在手机真桌面
+        moveTaskToBack(true);
+    }
+
+    public void cancelBackgroundWakeUp() {
+        pendingWakeUpCall = false;
+        if (mainHandler != null) {
+            mainHandler.removeCallbacks(this);
+        }
+        releaseBgWakeLock();
+    }
+
+    private void releaseBgWakeLock() {
+        try {
+            if (bgWakeLock != null && bgWakeLock.isHeld()) {
+                bgWakeLock.release();
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void bringActivityToFrontAndRing() {
+        try {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                PowerManager.WakeLock screenLock = pm.newWakeLock(
+                        PowerManager.FULL_WAKE_LOCK
+                                | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                                | PowerManager.ON_AFTER_RELEASE,
+                        "UCNCallSim::ScreenWake"
+                );
+                screenLock.acquire(5000L);
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+            if (am != null) {
+                am.moveTaskToFront(getTaskId(), ActivityManager.MOVE_TASK_WITH_HOME);
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            Intent intent = new Intent(this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        } catch (Exception ignored) {
+        }
+
+        if (webView != null) {
+            webView.evaluateJavascript("window.onAndroidBackgroundAlarmFired && window.onAndroidBackgroundAlarmFired()", null);
+        }
+        releaseBgWakeLock();
+    }
+
+    public void openBrowserUrl(String url) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        } catch (Exception ignored) {
         }
     }
 
@@ -154,6 +256,7 @@ public class MainActivity extends Activity implements Runnable {
 
     @Override
     protected void onDestroy() {
+        cancelBackgroundWakeUp();
         stopNativeVibrate();
         if (webView != null) {
             webView.destroy();
@@ -186,6 +289,21 @@ public class MainActivity extends Activity implements Runnable {
         @JavascriptInterface
         public void setImmersive(boolean immersive) {
             activity.applyImmersiveMode(immersive);
+        }
+
+        @JavascriptInterface
+        public void scheduleBackgroundCall(int seconds) {
+            activity.scheduleBackgroundWakeUp(seconds);
+        }
+
+        @JavascriptInterface
+        public void cancelBackgroundCall() {
+            activity.cancelBackgroundWakeUp();
+        }
+
+        @JavascriptInterface
+        public void openExternalUrl(String url) {
+            activity.openBrowserUrl(url);
         }
 
         @JavascriptInterface

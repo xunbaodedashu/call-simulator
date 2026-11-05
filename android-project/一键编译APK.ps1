@@ -28,6 +28,7 @@ $classesJar = "$buildDir/classes.jar"
 & jar cf $classesJar -C "$buildDir/classes" .
 & java -cp $d8Jar com.android.tools.r8.D8 --lib $androidJar --min-api 24 --output "$buildDir/dex" $classesJar
 
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::Open((Resolve-Path $unsignedApk).Path, [System.IO.Compression.ZipArchiveMode]::Update)
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, (Resolve-Path "$buildDir/dex/classes.dex").Path, "classes.dex", [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
