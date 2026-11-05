@@ -1,0 +1,1951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>模拟来电助手 · UCN MQ Z</title>
+  <style>
+    :root {
+      --bg-grad-1: #0f172a;
+      --bg-grad-2: #1e293b;
+      --bg-grad-3: #090d16;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-blue: #3b82f6;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-sub: rgba(248, 250, 252, 0.68);
+      --text-muted: rgba(248, 250, 252, 0.45);
+      --glass-bg: rgba(255, 255, 255, 0.10);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-active: rgba(255, 255, 255, 0.26);
+    }
+
+    /* 主题壁纸配色 */
+    body[data-theme="hyperos"] {
+      --bg-grad-1: #102542;
+      --bg-grad-2: #1b3b6f;
+      --bg-grad-3: #0b132b;
+    }
+    body[data-theme="harmony"] {
+      --bg-grad-1: #1a1829;
+      --bg-grad-2: #2d2a4a;
+      --bg-grad-3: #0d0c16;
+    }
+    body[data-theme="oled"] {
+      --bg-grad-1: #000000;
+      --bg-grad-2: #06080c;
+      --bg-grad-3: #000000;
+    }
+    body[data-theme="emerald"] {
+      --bg-grad-1: #092622;
+      --bg-grad-2: #134e4a;
+      --bg-grad-3: #041311;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, select, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #090d16;
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
+    }
+
+    /* 主容器 */
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
+      transition: background 0.4s ease;
+    }
+
+    /* 背景动态柔光球（通话界面拟真氛围感） */
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(65px);
+      opacity: 0.35;
+      pointer-events: none;
+      z-index: 0;
+      transition: all 0.6s ease;
+    }
+    .orb-1 {
+      width: 260px;
+      height: 260px;
+      top: 8%;
+      left: -40px;
+      background: #3b82f6;
+      animation: floatOrb 9s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 240px;
+      height: 240px;
+      bottom: 12%;
+      right: -40px;
+      background: #10b981;
+      animation: floatOrb 11s ease-in-out infinite alternate-reverse;
+    }
+    body[data-theme="oled"] .ambient-orb {
+      opacity: 0.05;
+    }
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(24px, -28px) scale(1.12); }
+    }
+
+    /* 拟真手机顶部状态栏（同时也是双击防穿帮返回热区） */
+    .fake-statusbar {
+      position: relative;
+      z-index: 50;
+      height: 40px;
+      padding: 8px 22px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .fake-statusbar.hidden-bar {
+      opacity: 0;
+      height: 36px;
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-carrier {
+      font-size: 12px;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-5g {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 3px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.18);
+    }
+    .battery-pill {
+      display: inline-flex;
+      align-items: center;
+      width: 23px;
+      height: 11.5px;
+      border: 1.4px solid rgba(255,255,255,0.85);
+      border-radius: 3.5px;
+      padding: 1.5px;
+      position: relative;
+      margin-left: 2px;
+    }
+    .battery-pill::after {
+      content: "";
+      position: absolute;
+      right: -3.5px;
+      top: 2.5px;
+      width: 2px;
+      height: 4px;
+      border-radius: 0 1px 1px 0;
+      background: rgba(255,255,255,0.85);
+    }
+    .battery-fill {
+      height: 100%;
+      width: 82%;
+      background: #fff;
+      border-radius: 1.5px;
+    }
+
+    /* 视图切换通用 */
+    .screen-view {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      height: calc(100% - 40px);
+      overflow: hidden;
+    }
+    .screen-view.active {
+      display: flex;
+      animation: fadeScreen 0.22s ease-out;
+    }
+    @keyframes fadeScreen {
+      from { opacity: 0; transform: scale(0.985); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* =====================================================
+       界面 0：控制台（编辑号码与参数）
+       ===================================================== */
+    #view-editor {
+      overflow-y: auto;
+      padding: 10px 18px 28px;
+      scrollbar-width: none;
+    }
+    #view-editor::-webkit-scrollbar {
+      display: none;
+    }
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.09);
+    }
+    .editor-title-wrap h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .editor-title-wrap p {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 3px;
+    }
+    .brand-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.28), rgba(16,185,129,0.28));
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #e2e8f0;
+    }
+
+    .card-panel {
+      background: rgba(15, 23, 42, 0.68);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      border-radius: 16px;
+      padding: 14px 15px;
+      margin-bottom: 12px;
+    }
+    .card-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #93c5fd;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-group {
+      margin-bottom: 11px;
+    }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .form-label span.hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .input-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .input-box.phone-main-input {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #60a5fa;
+      background: rgba(59, 130, 246, 0.09);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .input-box:focus {
+      border-color: #60a5fa;
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.82);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip-btn:active, .chip-btn.active {
+      background: rgba(59, 130, 246, 0.32);
+      border-color: #60a5fa;
+      color: #fff;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* 开关行 */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 13.5px;
+    }
+    .switch-pill {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .switch-pill.on {
+      background: var(--accent-green);
+    }
+    .switch-pill::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .switch-pill.on::after {
+      transform: translateX(20px);
+    }
+
+    /* 三个界面快速进入卡片 */
+    .launch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 9px;
+      margin-top: 6px;
+    }
+    .launch-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.16);
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.14s, filter 0.14s;
+    }
+    .launch-btn:active {
+      transform: scale(0.96);
+    }
+    .launch-btn .sub-desc {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+    .launch-incoming {
+      background: linear-gradient(145deg, rgba(34, 197, 94, 0.34), rgba(21, 128, 61, 0.45));
+      border-color: rgba(74, 222, 128, 0.45);
+    }
+    .launch-connected {
+      background: linear-gradient(145deg, rgba(59, 130, 246, 0.34), rgba(29, 78, 216, 0.45));
+      border-color: rgba(96, 165, 250, 0.45);
+    }
+    .launch-unconnected {
+      background: linear-gradient(145deg, rgba(239, 68, 68, 0.34), rgba(185, 28, 28, 0.45));
+      border-color: rgba(248, 113, 113, 0.45);
+    }
+
+    .delay-bar {
+      margin-top: 9px;
+      display: flex;
+      gap: 8px;
+    }
+    .delay-btn {
+      flex: 1;
+      padding: 9px 10px;
+      border-radius: 11px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.07);
+      color: #e2e8f0;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+    .delay-btn:active {
+      background: rgba(59,130,246,0.28);
+    }
+
+    .Stealth-tip {
+      margin-top: 10px;
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.58);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* =====================================================
+       通用通话头部（来电显示 / 已接通 / 未接通 共用排版）
+       ===================================================== */
+    .call-top-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 46px 24px 0;
+    }
+    .sim-hd-badge-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .sim-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: rgba(255, 255, 255, 0.92);
+      letter-spacing: 0.4px;
+    }
+    .hd-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 1.5px 5px;
+      border-radius: 4px;
+      border: 1.2px solid rgba(255, 255, 255, 0.72);
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .caller-primary {
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: 0.8px;
+      line-height: 1.2;
+      color: #ffffff;
+      word-break: break-all;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+    }
+    .caller-secondary-phone {
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.82);
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+    .caller-location {
+      font-size: 15px;
+      color: var(--text-sub);
+      font-weight: 400;
+      letter-spacing: 0.4px;
+      margin-bottom: 14px;
+    }
+
+    /* 状态副文案（如“来电”、“00:25”、“未接来电”） */
+    .call-status-pill {
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+      letter-spacing: 0.6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      animation: dotBlink 1.3s ease-in-out infinite;
+    }
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.8); }
+    }
+
+    .call-timer-text {
+      font-size: 19px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    /* =====================================================
+       界面 1：来电显示 (Incoming Call)
+       ===================================================== */
+    #view-incoming {
+      justify-content: space-between;
+      padding-bottom: 54px;
+    }
+    .incoming-bottom-area {
+      width: 100%;
+      padding: 0 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 34px;
+    }
+    .quick-aux-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 12px;
+    }
+    .aux-action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .aux-action-item:active {
+      opacity: 0.6;
+    }
+    .aux-icon-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .incoming-main-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 14px;
+    }
+    .round-call-btn-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .round-call-btn-label {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.86);
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+
+    .round-call-btn {
+      position: relative;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.16s ease;
+    }
+    .round-call-btn:active {
+      transform: scale(0.91);
+    }
+    .btn-decline {
+      background: linear-gradient(145deg, #f87171, #ef4444, #dc2626);
+      box-shadow: 0 8px 26px rgba(239, 68, 68, 0.42);
+    }
+    .btn-accept {
+      background: linear-gradient(145deg, #4ade80, #22c55e, #16a34a);
+      box-shadow: 0 8px 26px rgba(34, 197, 94, 0.45);
+      animation: acceptBounce 2.2s ease-in-out infinite;
+    }
+    .btn-accept::before,
+    .btn-accept::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid rgba(74, 222, 128, 0.55);
+      animation: ringRipple 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+      pointer-events: none;
+    }
+    .btn-accept::after {
+      animation-delay: 0.9s;
+    }
+
+    @keyframes ringRipple {
+      0% { transform: scale(0.95); opacity: 0.85; }
+      100% { transform: scale(1.48); opacity: 0; }
+    }
+    @keyframes acceptBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* =====================================================
+       界面 2：已接通 (Connected / In-Call)
+       ===================================================== */
+    #view-connected {
+      justify-content: space-between;
+      padding-bottom: 48px;
+    }
+    .incall-controls-wrap {
+      width: 100%;
+      padding: 0 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 34px;
+    }
+    .incall-grid-6 {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      row-gap: 24px;
+      column-gap: 16px;
+      justify-items: center;
+    }
+    .tool-btn-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .tool-circle {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      transition: all 0.18s ease;
+    }
+    .tool-btn-item:active .tool-circle {
+      transform: scale(0.92);
+    }
+    .tool-btn-item.active .tool-circle {
+      background: rgba(255, 255, 255, 0.92);
+      color: #0f172a;
+      border-color: #fff;
+      box-shadow: 0 4px 18px rgba(255, 255, 255, 0.25);
+    }
+    .tool-btn-item.recording-active .tool-circle {
+      background: rgba(239, 68, 68, 0.28);
+      border-color: #f87171;
+      color: #fca5a5;
+    }
+    .tool-label {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.84);
+      font-weight: 400;
+    }
+
+    /* 拨号键盘浮层（在已接通界面点击“键盘”可展开） */
+    .dtmf-keypad-overlay {
+      display: none;
+      width: 100%;
+      padding: 6px 18px 10px;
+      flex-direction: column;
+      align-items: center;
+    }
+    .dtmf-keypad-overlay.show {
+      display: flex;
+      animation: fadeScreen 0.18s ease-out;
+    }
+    .dtmf-typed-display {
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      min-height: 36px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .dtmf-grid {
+      width: 100%;
+      max-width: 310px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      justify-items: center;
+    }
+    .dtmf-key {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+    }
+    .dtmf-key:active {
+      background: rgba(255, 255, 255, 0.30);
+    }
+    .dtmf-key .num {
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1.05;
+    }
+    .dtmf-key .sub {
+      font-size: 9px;
+      letter-spacing: 1.2px;
+      opacity: 0.65;
+      margin-top: 2px;
+    }
+    .dtmf-bottom-row {
+      width: 100%;
+      max-width: 310px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+    .hide-keypad-btn {
+      font-size: 14px;
+      color: rgba(255,255,255,0.85);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+    /* =====================================================
+       界面 3：未接通 (Unconnected / Missed / Ended)
+       ===================================================== */
+    #view-unconnected {
+      justify-content: space-between;
+      padding-bottom: 52px;
+    }
+    .unconnected-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(248, 113, 113, 0.38);
+      color: #fca5a5;
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 4px;
+      cursor: pointer;
+    }
+    .unconnected-detail-card {
+      margin: 0 28px;
+      padding: 18px 20px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .unconnected-detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13.5px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .unconnected-detail-row .val {
+      color: #fff;
+      font-weight: 500;
+    }
+    .unconnected-bottom-actions {
+      width: 100%;
+      padding: 0 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+    .unconnected-btn-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    /* 隐蔽式底部三态快速切换胶囊（可设为完全隐藏防穿帮） */
+    .quick-mode-dock {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      display: flex;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      backdrop-filter: blur(10px);
+      transition: opacity 0.25s;
+    }
+    .quick-mode-dock.stealth-hidden {
+      display: none !important;
+    }
+    .dock-pill {
+      padding: 4px 11px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.72);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+    }
+    .dock-pill.active {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* 倒计时黑屏遮罩（用于延时触发来电） */
+    .standby-blackout {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.22);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .standby-blackout.active {
+      display: flex;
+    }
+
+    /* 轻提示气泡 */
+    .toast-tip {
+      position: fixed;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #f8fafc;
+      padding: 7px 15px;
+      border-radius: 999px;
+      font-size: 12px;
+      z-index: 200;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .toast-tip.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body data-theme="default">
+  <div class="app-shell">
+    <!-- 背景柔光氛围球 -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+
+    <!-- 顶部状态栏（在通话三界面中双击此处返回编辑台） -->
+    <div class="fake-statusbar" id="topStatusBar" title="双击顶部返回编辑控制台">
+      <div class="status-left">
+        <span id="statusClockText">21:30</span>
+        <span class="status-carrier" id="statusCarrierTop">中国移动</span>
+      </div>
+      <div class="status-right">
+        <span class="status-5g">5G</span>
+        <!-- 信号满格 SVG -->
+        <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
+          <rect x="0.5" y="8" width="2.2" height="3.5" rx="0.6" fill="white"/>
+          <rect x="4" y="6" width="2.2" height="5.5" rx="0.6" fill="white"/>
+          <rect x="7.5" y="3.5" width="2.2" height="8" rx="0.6" fill="white"/>
+          <rect x="11" y="1" width="2.2" height="10.5" rx="0.6" fill="white"/>
+        </svg>
+        <div class="battery-pill"><div class="battery-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         界面 0：号码与状态编辑控制台
+         ===================================================== -->
+    <section class="screen-view active" id="view-editor">
+      <div class="editor-header">
+        <div class="editor-title-wrap">
+          <h1>模拟来电控制台</h1>
+          <p>自由编辑来电号码与状态 · 一键切换三大界面</p>
+        </div>
+        <span class="brand-badge">UCN MQ Z</span>
+      </div>
+
+      <!-- 一键进入三界面 -->
+      <div class="card-panel">
+        <div class="card-section-title">
+          <span>一键进入三大界面</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.55);text-transform:none;">双击屏幕最顶部返回此处</span>
+        </div>
+        <div class="launch-grid">
+          <button class="launch-btn launch-incoming" onclick="enterCallScreen('incoming')">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <span>来电显示</span>
+            <span class="sub-desc">响铃待接听</span>
+          </button>
+
+          <button class="launch-btn launch-connected" onclick="enterCallScreen('connected')">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15 15"/>
+            </svg>
+            <span>已接通</span>
+            <span class="sub-desc">通话计时中</span>
+          </button>
+
+          <button class="launch-btn launch-unconnected" onclick="enterCallScreen('unconnected')">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/>
+              <line x1="23" y1="1" x2="1" y2="23"/>
+            </svg>
+            <span>未接通</span>
+            <span class="sub-desc">未接/挂断页</span>
+          </button>
+        </div>
+
+        <div class="delay-bar">
+          <button class="delay-btn" onclick="startDelayedIncoming(3)">⏱ 3秒后黑屏来电</button>
+          <button class="delay-btn" onclick="startDelayedIncoming(5)">⏱ 5秒后黑屏来电</button>
+          <button class="delay-btn" onclick="startDelayedIncoming(10)">⏱ 10秒后黑屏来电</button>
+        </div>
+      </div>
+
+      <!-- 号码与归属地设置 -->
+      <div class="card-panel">
+        <div class="card-section-title">
+          <span>来电号码与身份信息</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span>来电手机号码（随意编辑）</span>
+            <span class="hint" onclick="formatPhoneInput()" style="color:#60a5fa;cursor:pointer;">一键3-4-4空格排版</span>
+          </label>
+          <input type="text" id="inputPhone" class="input-box phone-main-input" value="138 0013 8000" placeholder="输入任意手机号/座机号/短号" />
+          <div class="preset-chips">
+            <button type="button" class="chip-btn" onclick="setQuickCaller('138 0013 8000','','北京 移动')">138标准号</button>
+            <button type="button" class="chip-btn" onclick="setQuickCaller('186 2109 5820','','上海 联通')">186陌生号</button>
+            <button type="button" class="chip-btn" onclick="setQuickCaller('010-8291 6600','物业值班室','北京 固话')">固话座机</button>
+            <button type="button" class="chip-btn" onclick="setQuickCaller('95588','工商银行客服','客服热线')">银行/快递</button>
+            <button type="button" class="chip-btn" onclick="setQuickCaller('未知号码','','私人号码')">未知号码</button>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">
+              <span>备注姓名 <span class="hint">(留空则大字显号码)</span></span>
+            </label>
+            <input type="text" id="inputName" class="input-box" value="" placeholder="留空只显示手机号" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span>归属地与运营商</span>
+            </label>
+            <input type="text" id="inputLocation" class="input-box" value="北京 移动" placeholder="如：广东 深圳 电信" />
+          </div>
+        </div>
+
+        <div class="form-row-2" style="margin-top:4px;">
+          <div class="form-group">
+            <label class="form-label"><span>SIM卡与高清标识</span></label>
+            <select id="inputSimTag" class="input-box">
+              <option value="卡1|HD">卡1 + HD 高清</option>
+              <option value="卡2|HD">卡2 + HD 高清</option>
+              <option value="|HD">仅显示 HD</option>
+              <option value="|">不显示卡槽标识</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><span>背景壁纸风格</span></label>
+            <select id="inputTheme" class="input-box" onchange="applyThemeChange()">
+              <option value="default">深空磨砂黑 (主流默认)</option>
+              <option value="hyperos">澎湃蔚蓝 (HyperOS)</option>
+              <option value="harmony">鸿蒙星河 (HarmonyOS)</option>
+              <option value="emerald">极光暗绿 (质感深青)</option>
+              <option value="oled">纯黑防反光 (OLED暗拍)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 已接通 & 未接通 细节配置 -->
+      <div class="card-panel">
+        <div class="card-section-title">
+          <span>已接通 / 未接通 状态细节</span>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">
+              <span>「已接通」起始秒数</span>
+              <span class="hint">MM:SS</span>
+            </label>
+            <input type="text" id="inputStartTimer" class="input-box" value="00:00" placeholder="如 00:00 或 01:28" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <span>「未接通」显示文案</span>
+            </label>
+            <input type="text" id="inputUnconnectedText" class="input-box" value="未接来电" placeholder="如：未接来电 / 对方忙线" />
+          </div>
+        </div>
+
+        <div class="preset-chips" style="margin-bottom: 10px;">
+          <button type="button" class="chip-btn" onclick="setUnconnectedPreset('未接来电','响铃 1 声后挂断')">未接来电</button>
+          <button type="button" class="chip-btn" onclick="setUnconnectedPreset('无人接听','对方暂时无法接听')">无人接听</button>
+          <button type="button" class="chip-btn" onclick="setUnconnectedPreset('对方忙线中','用户正忙，请稍后再拨')">对方忙线中</button>
+          <button type="button" class="chip-btn" onclick="setUnconnectedPreset('通话结束','通话时长 00:00')">通话结束</button>
+          <button type="button" class="chip-btn" onclick="setUnconnectedPreset('正在呼叫…','等待对方接听')">正在呼叫…</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">
+            <span>「未接通」详情原因备注</span>
+          </label>
+          <input type="text" id="inputUnconnectedReason" class="input-box" value="响铃 1 声后挂断" placeholder="如：响铃 5 秒后挂断 / 对方已拒接" />
+        </div>
+      </div>
+
+      <!-- 音效、震动与防穿帮设置 -->
+      <div class="card-panel">
+        <div class="card-section-title">
+          <span>拍摄防穿帮与声效控制</span>
+        </div>
+
+        <div class="toggle-row" onclick="toggleSwitch('ringtone')">
+          <span>来电模拟铃声 & 按键音</span>
+          <div class="switch-pill on" id="sw-ringtone"></div>
+        </div>
+        <div class="toggle-row" onclick="toggleSwitch('vibrate')">
+          <span>来电真实手机震动</span>
+          <div class="switch-pill on" id="sw-vibrate"></div>
+        </div>
+        <div class="toggle-row" onclick="toggleSwitch('stealthDock')">
+          <span>隐藏底部快捷切换条（纯净无穿帮模式）</span>
+          <div class="switch-pill on" id="sw-stealthDock"></div>
+        </div>
+      </div>
+
+      <p class="Stealth-tip">
+        💡 操作提示：进入模拟界面后，<strong>双击顶部状态栏</strong> 或 <strong>连按两次手机返回键</strong> 即可返回此编辑页。
+      </p>
+    </section>
+
+    <!-- =====================================================
+         界面 1：来电显示 (Incoming Call)
+         ===================================================== -->
+    <section class="screen-view" id="view-incoming">
+      <div class="call-top-section">
+        <div class="sim-hd-badge-row" id="inc-sim-row">
+          <span class="sim-tag" id="inc-sim-tag">卡1</span>
+          <span class="hd-tag" id="inc-hd-tag">HD</span>
+        </div>
+        <div class="caller-primary" id="inc-primary">138 0013 8000</div>
+        <div class="caller-secondary-phone" id="inc-secondary" style="display:none;">138 0013 8000</div>
+        <div class="caller-location" id="inc-location">北京 移动</div>
+        <div class="call-status-pill">
+          <span class="pulse-dot"></span>
+          <span>来电</span>
+        </div>
+      </div>
+
+      <div class="incoming-bottom-area">
+        <!-- 提醒我 / 短信回复 -->
+        <div class="quick-aux-row">
+          <div class="aux-action-item" onclick="showQuickToast('已设置稍后提醒')">
+            <div class="aux-icon-circle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 7 12 12 15 15"/>
+              </svg>
+            </div>
+            <span>提醒我</span>
+          </div>
+          <div class="aux-action-item" onclick="enterCallScreen('unconnected', '已发送快捷短信回复')">
+            <div class="aux-icon-circle">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <span>短信回复</span>
+          </div>
+        </div>
+
+        <!-- 拒绝 / 接听 双圆大键 -->
+        <div class="incoming-main-buttons">
+          <div class="round-call-btn-wrap">
+            <button class="round-call-btn btn-decline" onclick="handleDeclineIncoming()" aria-label="拒绝">
+              <!-- 挂断电话图标 -->
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
+                <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+              </svg>
+            </button>
+            <span class="round-call-btn-label">拒绝</span>
+          </div>
+
+          <div class="round-call-btn-wrap">
+            <button class="round-call-btn btn-accept" onclick="handleAcceptIncoming()" aria-label="接听">
+              <!-- 接听电话图标 -->
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+              </svg>
+            </button>
+            <span class="round-call-btn-label">接听</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         界面 2：已接通 (Connected / In-Call)
+         ===================================================== -->
+    <section class="screen-view" id="view-connected">
+      <div class="call-top-section">
+        <div class="sim-hd-badge-row" id="con-sim-row">
+          <span class="sim-tag" id="con-sim-tag">卡1</span>
+          <span class="hd-tag" id="con-hd-tag">HD</span>
+        </div>
+        <div class="caller-primary" id="con-primary">138 0013 8000</div>
+        <div class="caller-secondary-phone" id="con-secondary" style="display:none;">138 0013 8000</div>
+        <div class="caller-location" id="con-location">北京 移动</div>
+        <div class="call-timer-text" id="con-timer">00:00</div>
+      </div>
+
+      <div class="incall-controls-wrap">
+        <!-- 六宫格功能区 -->
+        <div class="incall-grid-6" id="incallGrid6">
+          <!-- 1. 录音 -->
+          <div class="tool-btn-item" id="tool-record" onclick="toggleInCallTool('record')">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <circle cx="12" cy="12" r="8"/>
+                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+              </svg>
+            </div>
+            <span class="tool-label" id="label-record">录音</span>
+          </div>
+
+          <!-- 2. 静音 -->
+          <div class="tool-btn-item" id="tool-mute" onclick="toggleInCallTool('mute')">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <line x1="1" y1="1" x2="23" y2="23"/>
+                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </div>
+            <span class="tool-label">静音</span>
+          </div>
+
+          <!-- 3. 免提 -->
+          <div class="tool-btn-item" id="tool-speaker" onclick="toggleInCallTool('speaker')">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </div>
+            <span class="tool-label">免提</span>
+          </div>
+
+          <!-- 4. 添加通话 -->
+          <div class="tool-btn-item" id="tool-add" onclick="toggleInCallTool('add')">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </div>
+            <span class="tool-label">添加通话</span>
+          </div>
+
+          <!-- 5. 视频通话 -->
+          <div class="tool-btn-item" id="tool-video" onclick="toggleInCallTool('video')">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+            </div>
+            <span class="tool-label">视频通话</span>
+          </div>
+
+          <!-- 6. 拨号键盘 -->
+          <div class="tool-btn-item" id="tool-keypad" onclick="toggleDtmfKeypad(true)">
+            <div class="tool-circle">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="5" r="1.8"/><circle cx="12" cy="5" r="1.8"/><circle cx="18" cy="5" r="1.8"/>
+                <circle cx="6" cy="11" r="1.8"/><circle cx="12" cy="11" r="1.8"/><circle cx="18" cy="11" r="1.8"/>
+                <circle cx="6" cy="17" r="1.8"/><circle cx="12" cy="17" r="1.8"/><circle cx="18" cy="17" r="1.8"/>
+              </svg>
+            </div>
+            <span class="tool-label">键盘</span>
+          </div>
+        </div>
+
+        <!-- 可展开 DTMF 拨号盘 -->
+        <div class="dtmf-keypad-overlay" id="dtmfKeypad">
+          <div class="dtmf-typed-display" id="dtmfDisplay"></div>
+          <div class="dtmf-grid">
+            <div class="dtmf-key" onclick="pressDtmf('1')"><span class="num">1</span><span class="sub">&nbsp;</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('2')"><span class="num">2</span><span class="sub">ABC</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('3')"><span class="num">3</span><span class="sub">DEF</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('4')"><span class="num">4</span><span class="sub">GHI</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('5')"><span class="num">5</span><span class="sub">JKL</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('6')"><span class="num">6</span><span class="sub">MNO</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('7')"><span class="num">7</span><span class="sub">PQRS</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('8')"><span class="num">8</span><span class="sub">TUV</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('9')"><span class="num">9</span><span class="sub">WXYZ</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('*')"><span class="num">*</span><span class="sub">&nbsp;</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('0')"><span class="num">0</span><span class="sub">+</span></div>
+            <div class="dtmf-key" onclick="pressDtmf('#')"><span class="num">#</span><span class="sub">&nbsp;</span></div>
+          </div>
+        </div>
+
+        <!-- 底部中央红色挂断按钮 -->
+        <div class="dtmf-bottom-row" style="justify-content: center; position: relative;">
+          <button class="round-call-btn btn-decline" onclick="handleHangupConnected()" aria-label="挂断">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
+              <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+            </svg>
+          </button>
+          <button class="hide-keypad-btn" id="btnHideKeypad" style="display:none; position:absolute; right: 16px;" onclick="toggleDtmfKeypad(false)">收起</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         界面 3：未接通 (Unconnected / Missed / Ended)
+         ===================================================== -->
+    <section class="screen-view" id="view-unconnected">
+      <div class="call-top-section">
+        <div class="sim-hd-badge-row" id="unc-sim-row">
+          <span class="sim-tag" id="unc-sim-tag">卡1</span>
+          <span class="hd-tag" id="unc-hd-tag">HD</span>
+        </div>
+        <div class="caller-primary" id="unc-primary">138 0013 8000</div>
+        <div class="caller-secondary-phone" id="unc-secondary" style="display:none;">138 0013 8000</div>
+        <div class="caller-location" id="unc-location">北京 移动</div>
+
+        <!-- 点击状态胶囊也可快速轮换未接通文案 -->
+        <div class="unconnected-status-badge" id="unc-status-badge" onclick="cycleUnconnectedStatus()" title="点击可快速切换状态文案">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="16 2 22 2 22 8"/>
+            <line x1="22" y1="2" x2="13.5" y2="10.5"/>
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/>
+          </svg>
+          <span id="unc-status-text">未接来电</span>
+        </div>
+      </div>
+
+      <!-- 未接通详情卡片 -->
+      <div class="unconnected-detail-card">
+        <div class="unconnected-detail-row">
+          <span>通话状态</span>
+          <span class="val" id="unc-reason-text">响铃 1 声后挂断</span>
+        </div>
+        <div class="unconnected-detail-row">
+          <span>呼叫时间</span>
+          <span class="val" id="unc-time-text">今天 21:30</span>
+        </div>
+        <div class="unconnected-detail-row">
+          <span>号码归属</span>
+          <span class="val" id="unc-card-loc">北京 移动</span>
+        </div>
+      </div>
+
+      <!-- 底部回拨 / 发短信 / 返回按钮 -->
+      <div class="unconnected-bottom-actions">
+        <div class="unconnected-btn-row">
+          <!-- 发短信 -->
+          <div class="round-call-btn-wrap">
+            <button class="round-call-btn" style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);" onclick="showQuickToast('已打开短信回复')" aria-label="发短信">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+            <span class="round-call-btn-label">发送短信</span>
+          </div>
+
+          <!-- 立即重拨（进入已接通或来电） -->
+          <div class="round-call-btn-wrap">
+            <button class="round-call-btn btn-accept" style="animation:none;" onclick="enterCallScreen('connected')" aria-label="回拨">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+              </svg>
+            </button>
+            <span class="round-call-btn-label">立即回拨</span>
+          </div>
+
+          <!-- 关闭/返回 -->
+          <div class="round-call-btn-wrap">
+            <button class="round-call-btn" style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);" onclick="returnToEditor()" aria-label="关闭">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+            <span class="round-call-btn-label">关闭</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 可选底部悬浮切换条（默认隐藏以防穿帮，可在设置中打开方便调试） -->
+    <div class="quick-mode-dock stealth-hidden" id="quickModeDock">
+      <button class="dock-pill" id="dock-editor" onclick="returnToEditor()">编辑台</button>
+      <button class="dock-pill" id="dock-incoming" onclick="enterCallScreen('incoming')">来电显示</button>
+      <button class="dock-pill" id="dock-connected" onclick="enterCallScreen('connected')">已接通</button>
+      <button class="dock-pill" id="dock-unconnected" onclick="enterCallScreen('unconnected')">未接通</button>
+    </div>
+
+    <!-- 延时来电黑屏息屏层 -->
+    <div class="standby-blackout" id="standbyOverlay" onclick="cancelDelayedIncoming()">
+      <div id="standbyCountdownText">息屏待机中 · 3 秒后触发来电（点击屏幕取消）</div>
+    </div>
+
+    <!-- 轻提示 -->
+    <div class="toast-tip" id="toastTip"></div>
+  </div>
+
+  <script>
+    // =====================================================
+    // 状态管理与持久化
+    // =====================================================
+    const appState = {
+      currentScreen: 'editor', // 'editor' | 'incoming' | 'connected' | 'unconnected'
+      ringtoneEnabled: true,
+      vibrateEnabled: true,
+      stealthDockHidden: true,
+      timerSeconds: 0,
+      timerInterval: null,
+      recordSeconds: 0,
+      recordInterval: null,
+      ringAudioInterval: null,
+      standbyTimeout: null,
+      standbyTickInterval: null,
+      audioCtx: null,
+      lastTopTapTime: 0,
+      lastBackPressTime: 0
+    };
+
+    // 初始化时钟
+    function updateClock() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('statusClockText').textContent = `${hh}:${mm}`;
+      document.getElementById('unc-time-text').textContent = `今天 ${hh}:${mm}`;
+    }
+    setInterval(updateClock, 5000);
+    updateClock();
+
+    // 顶部状态栏双击返回编辑控制台（防穿帮设计）
+    document.getElementById('topStatusBar').addEventListener('click', () => {
+      if (appState.currentScreen === 'editor') return;
+      const now = Date.now();
+      if (now - appState.lastTopTapTime < 420) {
+        returnToEditor();
+      }
+      appState.lastTopTapTime = now;
+    });
+
+    // 保存与读取本地配置
+    function saveConfigToStorage() {
+      try {
+        const cfg = {
+          phone: document.getElementById('inputPhone').value,
+          name: document.getElementById('inputName').value,
+          location: document.getElementById('inputLocation').value,
+          simTag: document.getElementById('inputSimTag').value,
+          theme: document.getElementById('inputTheme').value,
+          startTimer: document.getElementById('inputStartTimer').value,
+          unconnectedText: document.getElementById('inputUnconnectedText').value,
+          unconnectedReason: document.getElementById('inputUnconnectedReason').value,
+          ringtoneEnabled: appState.ringtoneEnabled,
+          vibrateEnabled: appState.vibrateEnabled,
+          stealthDockHidden: appState.stealthDockHidden
+        };
+        localStorage.setItem('ucn_call_sim_cfg_v1', JSON.stringify(cfg));
+      } catch (e) {}
+    }
+
+    function loadConfigFromStorage() {
+      try {
+        const raw = localStorage.getItem('ucn_call_sim_cfg_v1');
+        if (!raw) return;
+        const cfg = JSON.parse(raw);
+        if (cfg.phone !== undefined) document.getElementById('inputPhone').value = cfg.phone;
+        if (cfg.name !== undefined) document.getElementById('inputName').value = cfg.name;
+        if (cfg.location !== undefined) document.getElementById('inputLocation').value = cfg.location;
+        if (cfg.simTag !== undefined) document.getElementById('inputSimTag').value = cfg.simTag;
+        if (cfg.theme !== undefined) {
+          document.getElementById('inputTheme').value = cfg.theme;
+          document.body.setAttribute('data-theme', cfg.theme);
+        }
+        if (cfg.startTimer !== undefined) document.getElementById('inputStartTimer').value = cfg.startTimer;
+        if (cfg.unconnectedText !== undefined) document.getElementById('inputUnconnectedText').value = cfg.unconnectedText;
+        if (cfg.unconnectedReason !== undefined) document.getElementById('inputUnconnectedReason').value = cfg.unconnectedReason;
+        if (typeof cfg.ringtoneEnabled === 'boolean') {
+          appState.ringtoneEnabled = cfg.ringtoneEnabled;
+          document.getElementById('sw-ringtone').classList.toggle('on', cfg.ringtoneEnabled);
+        }
+        if (typeof cfg.vibrateEnabled === 'boolean') {
+          appState.vibrateEnabled = cfg.vibrateEnabled;
+          document.getElementById('sw-vibrate').classList.toggle('on', cfg.vibrateEnabled);
+        }
+        if (typeof cfg.stealthDockHidden === 'boolean') {
+          appState.stealthDockHidden = cfg.stealthDockHidden;
+          document.getElementById('sw-stealthDock').classList.toggle('on', cfg.stealthDockHidden);
+          updateDockVisibility();
+        }
+      } catch (e) {}
+    }
+
+    // 快捷填入预设号码
+    function setQuickCaller(phone, name, loc) {
+      document.getElementById('inputPhone').value = phone;
+      document.getElementById('inputName').value = name;
+      document.getElementById('inputLocation').value = loc;
+      saveConfigToStorage();
+      showQuickToast(`已填入：${phone}`);
+    }
+
+    // 一键 3-4-4 手机号空格格式化
+    function formatPhoneInput() {
+      const el = document.getElementById('inputPhone');
+      const digits = el.value.replace(/\s+/g, '');
+      if (/^1\d{10}$/.test(digits)) {
+        el.value = `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7, 11)}`;
+      } else {
+        el.value = digits;
+      }
+      saveConfigToStorage();
+    }
+
+    // 快捷切换未接通文案预设
+    function setUnconnectedPreset(statusText, reasonText) {
+      document.getElementById('inputUnconnectedText').value = statusText;
+      document.getElementById('inputUnconnectedReason').value = reasonText;
+      saveConfigToStorage();
+      showQuickToast(`未接通状态设为：${statusText}`);
+    }
+
+    // 切换主题色
+    function applyThemeChange() {
+      const theme = document.getElementById('inputTheme').value;
+      document.body.setAttribute('data-theme', theme);
+      saveConfigToStorage();
+    }
+
+    // 开关组件
+    function toggleSwitch(key) {
+      if (key === 'ringtone') {
+        appState.ringtoneEnabled = !appState.ringtoneEnabled;
+        document.getElementById('sw-ringtone').classList.toggle('on', appState.ringtoneEnabled);
+      } else if (key === 'vibrate') {
+        appState.vibrateEnabled = !appState.vibrateEnabled;
+        document.getElementById('sw-vibrate').classList.toggle('on', appState.vibrateEnabled);
+      } else if (key === 'stealthDock') {
+        appState.stealthDockHidden = !appState.stealthDockHidden;
+        document.getElementById('sw-stealthDock').classList.toggle('on', appState.stealthDockHidden);
+        updateDockVisibility();
+      }
+      saveConfigToStorage();
+    }
+
+    function updateDockVisibility() {
+      const dock = document.getElementById('quickModeDock');
+      if (appState.currentScreen === 'editor' || appState.stealthDockHidden) {
+        dock.classList.add('stealth-hidden');
+      } else {
+        dock.classList.remove('stealth-hidden');
+      }
+    }
+
+    // 将编辑台的数据同步渲染到三个通话界面
+    function syncCallerInfoToScreens() {
+      saveConfigToStorage();
+      const rawPhone = document.getElementById('inputPhone').value.trim() || '未知号码';
+      const rawName = document.getElementById('inputName').value.trim();
+      const rawLoc = document.getElementById('inputLocation').value.trim();
+      const simVal = document.getElementById('inputSimTag').value || '|';
+      const [simText, hdText] = simVal.split('|');
+
+      // 顶部运营商同步
+      const carrierMatch = rawLoc.match(/(移动|联通|电信|广电)/);
+      document.getElementById('statusCarrierTop').textContent = carrierMatch ? `中国${carrierMatch[1]}` : '中国移动';
+
+      const prefixes = ['inc', 'con', 'unc'];
+      prefixes.forEach(p => {
+        const primaryEl = document.getElementById(`${p}-primary`);
+        const secEl = document.getElementById(`${p}-secondary`);
+        const locEl = document.getElementById(`${p}-location`);
+        const simRow = document.getElementById(`${p}-sim-row`);
+        const simTag = document.getElementById(`${p}-sim-tag`);
+        const hdTag = document.getElementById(`${p}-hd-tag`);
+
+        if (rawName) {
+          primaryEl.textContent = rawName;
+          secEl.textContent = rawPhone;
+          secEl.style.display = 'block';
+        } else {
+          primaryEl.textContent = rawPhone;
+          secEl.style.display = 'none';
+        }
+
+        locEl.textContent = rawLoc;
+        locEl.style.display = rawLoc ? 'block' : 'none';
+
+        simTag.textContent = simText;
+        simTag.style.display = simText ? 'inline-block' : 'none';
+        hdTag.textContent = hdText;
+        hdTag.style.display = hdText ? 'inline-block' : 'none';
+        simRow.style.display = (simText || hdText) ? 'inline-flex' : 'none';
+      });
+
+      // 未接通界面专属文字
+      const uncText = document.getElementById('inputUnconnectedText').value.trim() || '未接来电';
+      const uncReason = document.getElementById('inputUnconnectedReason').value.trim() || '响铃 1 声后挂断';
+      document.getElementById('unc-status-text').textContent = uncText;
+      document.getElementById('unc-reason-text').textContent = uncReason;
+      document.getElementById('unc-card-loc').textContent = rawLoc || '未知归属地';
+    }
+
+    // 解析 MM:SS 为秒数
+    function parseStartSeconds(str) {
+      const clean = (str || '00:00').trim();
+      if (/^\d+$/.test(clean)) return parseInt(clean, 10);
+      const parts = clean.split(':');
+      if (parts.length === 2) {
+        const m = parseInt(parts[0], 10) || 0;
+        const s = parseInt(parts[1], 10) || 0;
+        return m * 60 + s;
+      }
+      return 0;
+    }
+
+    function formatDuration(sec) {
+      const hrs = Math.floor(sec / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      const secs = sec % 60;
+      const mm = String(mins).padStart(2, '0');
+      const ss = String(secs).padStart(2, '0');
+      return hrs > 0 ? `${String(hrs).padStart(2, '0')}:${mm}:${ss}` : `${mm}:${ss}`;
+    }
+
+    // =====================================================
+    // 合成铃声与震动引擎（无需外部 MP3，离线100%可用）
+    // =====================================================
+    function ensureAudioCtx() {
+      if (!appState.audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) appState.audioCtx = new AC();
+      }
+      if (appState.audioCtx && appState.audioCtx.state === 'suspended') {
+        appState.audioCtx.resume();
+      }
+      return appState.audioCtx;
+    }
+
+    function playRingtoneBurst() {
+      if (!appState.ringtoneEnabled) return;
+      try {
+        const ctx = ensureAudioCtx();
+        if (!ctx) return;
+        const notes = [659.25, 783.99, 987.77, 783.99];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const start = ctx.currentTime + idx * 0.16;
+          gain.gain.setValueAtTime(0.001, start);
+          gain.gain.exponentialRampToValueAtTime(0.12, start + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.16);
+        });
+      } catch (e) {}
+    }
+
+    function playShortTone(freq = 425, durationMs = 160) {
+      if (!appState.ringtoneEnabled) return;
+      try {
+        const ctx = ensureAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + durationMs / 1000);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + durationMs / 1000);
+      } catch (e) {}
+    }
+
+    function startRingingEffect() {
+      stopAllEffects();
+      if (appState.ringtoneEnabled) {
+        playRingtoneBurst();
+        appState.ringAudioInterval = setInterval(playRingtoneBurst, 2400);
+      }
+      if (appState.vibrateEnabled) {
+        if (window.AndroidBridge && window.AndroidBridge.vibratePattern) {
+          window.AndroidBridge.vibratePattern(true);
+        } else if (navigator.vibrate) {
+          navigator.vibrate([600, 500, 600, 500, 600]);
+        }
+      }
+    }
+
+    function triggerShortVibrate(ms = 45) {
+      if (!appState.vibrateEnabled) return;
+      if (window.AndroidBridge && window.AndroidBridge.vibrateOnce) {
+        window.AndroidBridge.vibrateOnce(ms);
+      } else if (navigator.vibrate) {
+        navigator.vibrate(ms);
+      }
+    }
+
+    function stopAllEffects() {
+      if (appState.ringAudioInterval) {
+        clearInterval(appState.ringAudioInterval);
+        appState.ringAudioInterval = null;
+      }
+      if (appState.timerInterval) {
+        clearInterval(appState.timerInterval);
+        appState.timerInterval = null;
+      }
+      if (appState.recordInterval) {
+        clearInterval(appState.recordInterval);
+        appState.recordInterval = null;
+      }
+      if (window.AndroidBridge && window.AndroidBridge.stopVibrate) {
+        window.AndroidBridge.stopVibrate();
+      } else if (navigator.vibrate) {
+        navigator.vibrate(0);
+      }
+    }
+
+    // =====================================================
+    // 切换三大界面核心逻辑
+    // =====================================================
+    function enterCallScreen(mode, optionalToast) {
+      stopAllEffects();
+      syncCallerInfoToScreens();
+      appState.currentScreen = mode;
+
+      // 切换视图可见性
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
+      document.getElementById(`view-${mode}`).classList.add('active');
+
+      // 更新底部悬浮切换胶囊高亮
+      document.querySelectorAll('.dock-pill').forEach(el => el.classList.remove('active'));
+      const activeDock = document.getElementById(`dock-${mode}`);
+      if (activeDock) activeDock.classList.add('active');
+      updateDockVisibility();
+
+      // 通知原生 Android 开启全屏沉浸防穿帮
+      if (window.AndroidBridge && window.AndroidBridge.setImmersive) {
+        window.AndroidBridge.setImmersive(true);
+      }
+
+      if (mode === 'incoming') {
+        startRingingEffect();
+      } else if (mode === 'connected') {
+        toggleDtmfKeypad(false);
+        appState.timerSeconds = parseStartSeconds(document.getElementById('inputStartTimer').value);
+        document.getElementById('con-timer').textContent = formatDuration(appState.timerSeconds);
+        appState.timerInterval = setInterval(() => {
+          appState.timerSeconds++;
+          document.getElementById('con-timer').textContent = formatDuration(appState.timerSeconds);
+        }, 1000);
+      } else if (mode === 'unconnected') {
+        playShortTone(360, 220);
+      }
+
+      if (optionalToast) {
+        showQuickToast(optionalToast);
+      }
+    }
+
+    function returnToEditor() {
+      stopAllEffects();
+      appState.currentScreen = 'editor';
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-editor').classList.add('active');
+      updateDockVisibility();
+      if (window.AndroidBridge && window.AndroidBridge.setImmersive) {
+        window.AndroidBridge.setImmersive(false);
+      }
+    }
+
+    // 来电界面：点击「接听」 -> 进入「已接通」
+    function handleAcceptIncoming() {
+      triggerShortVibrate(55);
+      enterCallScreen('connected');
+    }
+
+    // 来电界面：点击「拒绝」 -> 进入「未接通」
+    function handleDeclineIncoming() {
+      triggerShortVibrate(45);
+      enterCallScreen('unconnected');
+    }
+
+    // 已接通界面：点击「挂断」 -> 更新未接通页为通话结束并跳转「未接通」
+    function handleHangupConnected() {
+      triggerShortVibrate(50);
+      const finalDur = formatDuration(appState.timerSeconds);
+      document.getElementById('unc-status-text').textContent = '通话结束';
+      document.getElementById('unc-reason-text').textContent = `通话时长 ${finalDur}`;
+      stopAllEffects();
+      appState.currentScreen = 'unconnected';
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-unconnected').classList.add('active');
+      updateDockVisibility();
+      playShortTone(340, 200);
+    }
+
+    // 在「未接通」界面点击状态胶囊快速轮换不同未接通文案
+    const unconnectedPresets = [
+      { status: '未接来电', reason: '响铃 1 声后挂断' },
+      { status: '无人接听', reason: '对方暂时无法接听' },
+      { status: '对方忙线中', reason: '用户正忙，请稍后再拨' },
+      { status: '通话结束', reason: '对方已挂断' },
+      { status: '正在呼叫…', reason: '等待对方接听' }
+    ];
+    let uncCycleIdx = 0;
+    function cycleUnconnectedStatus() {
+      uncCycleIdx = (uncCycleIdx + 1) % unconnectedPresets.length;
+      const item = unconnectedPresets[uncCycleIdx];
+      document.getElementById('unc-status-text').textContent = item.status;
+      document.getElementById('unc-reason-text').textContent = item.reason;
+      document.getElementById('inputUnconnectedText').value = item.status;
+      document.getElementById('inputUnconnectedReason').value = item.reason;
+      saveConfigToStorage();
+    }
+
+    // 已接通界面六宫格按钮交互
+    function toggleInCallTool(toolName) {
+      triggerShortVibrate(25);
+      const el = document.getElementById(`tool-${toolName}`);
+      if (!el) return;
+
+      if (toolName === 'record') {
+        const isRec = el.classList.toggle('recording-active');
+        const label = document.getElementById('label-record');
+        if (isRec) {
+          appState.recordSeconds = 0;
+          label.textContent = '录音 00:00';
+          appState.recordInterval = setInterval(() => {
+            appState.recordSeconds++;
+            label.textContent = `录音 ${formatDuration(appState.recordSeconds)}`;
+          }, 1000);
+        } else {
+          if (appState.recordInterval) clearInterval(appState.recordInterval);
+          label.textContent = '录音';
+        }
+      } else {
+        el.classList.toggle('active');
+      }
+    }
+
+    // 拨号盘开关与按键音
+    function toggleDtmfKeypad(show) {
+      const grid6 = document.getElementById('incallGrid6');
+      const pad = document.getElementById('dtmfKeypad');
+      const hideBtn = document.getElementById('btnHideKeypad');
+      if (show) {
+        grid6.style.display = 'none';
+        pad.classList.add('show');
+        hideBtn.style.display = 'block';
+      } else {
+        grid6.style.display = 'grid';
+        pad.classList.remove('show');
+        hideBtn.style.display = 'none';
+        document.getElementById('dtmfDisplay').textContent = '';
+      }
+    }
+
+    function pressDtmf(ch) {
+      triggerShortVibrate(20);
+      playShortTone(520 + ch.charCodeAt(0) * 7, 95);
+      const disp = document.getElementById('dtmfDisplay');
+      disp.textContent = (disp.textContent + ch).slice(-16);
+    }
+
+    // 延时黑屏触发来电（适合放下手机拍摄自己响起）
+    function startDelayedIncoming(seconds) {
+      saveConfigToStorage();
+      const overlay = document.getElementById('standbyOverlay');
+      const textEl = document.getElementById('standbyCountdownText');
+      let remain = seconds;
+      overlay.classList.add('active');
+      textEl.textContent = `息屏待机中 · ${remain} 秒后触发来电（点击取消）`;
+
+      // 1.5秒后把提示字淡去，让屏幕完全纯黑像真锁屏一样
+      setTimeout(() => {
+        if (overlay.classList.contains('active')) {
+          textEl.style.opacity = '0.02';
+        }
+      }, 1500);
+
+      appState.standbyTickInterval = setInterval(() => {
+        remain--;
+        if (remain > 0) {
+          textEl.textContent = `息屏待机中 · ${remain} 秒后触发来电`;
+        }
+      }, 1000);
+
+      appState.standbyTimeout = setTimeout(() => {
+        cancelDelayedIncoming();
+        enterCallScreen('incoming');
+      }, seconds * 1000);
+    }
+
+    function cancelDelayedIncoming() {
+      const overlay = document.getElementById('standbyOverlay');
+      const textEl = document.getElementById('standbyCountdownText');
+      overlay.classList.remove('active');
+      textEl.style.opacity = '1';
+      if (appState.standbyTimeout) clearTimeout(appState.standbyTimeout);
+      if (appState.standbyTickInterval) clearInterval(appState.standbyTickInterval);
+    }
+
+    // 轻提示气泡
+    let toastTimer = null;
+    function showQuickToast(msg) {
+      const el = document.getElementById('toastTip');
+      el.textContent = msg;
+      el.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // 供 Android 原生物理返回键调用的钩子
+    window.handleAndroidBackKey = function () {
+      if (document.getElementById('standbyOverlay').classList.contains('active')) {
+        cancelDelayedIncoming();
+        return true;
+      }
+      if (appState.currentScreen !== 'editor') {
+        const now = Date.now();
+        if (now - appState.lastBackPressTime < 1500) {
+          returnToEditor();
+        } else {
+          appState.lastBackPressTime = now;
+          showQuickToast('再按一次返回键回到号码编辑台');
+        }
+        return true;
+      }
+      if (window.AndroidBridge && window.AndroidBridge.exitApp) {
+        window.AndroidBridge.exitApp();
+      }
+      return false;
+    };
+
+    // 页面加载完成后恢复历史设置
+    loadConfigFromStorage();
+    syncCallerInfoToScreens();
+  </script>
+</body>
+</html>
