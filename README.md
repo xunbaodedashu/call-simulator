@@ -10,7 +10,7 @@
 - **🍎 iOS 免签全屏版直达**：[https://xunbaodedashu.github.io/call-simulator/ios.html](https://xunbaodedashu.github.io/call-simulator/ios.html)
 - **🤖 安卓版在线预览直达**：[https://xunbaodedashu.github.io/call-simulator/android.html](https://xunbaodedashu.github.io/call-simulator/android.html)
 - **📦 安卓 APK 直接下载**：[点击下载 `模拟来电_UCN_MQ_Z.apk`](./模拟来电_UCN_MQ_Z.apk)（仓库内置，GitHub / GitCode 通用）
-- **📦 历史版本归档**：[GitHub Releases](https://github.com/xunbaodedashu/call-simulator/releases)
+- **📦 历史版本归档**：[GitHub Releases](https://github.com/xunbaodedashu/call-simulator/releases) · [GitCode Releases](https://gitcode.com/xunbaodedashu/call-simulator/releases)
 
 ---
 
