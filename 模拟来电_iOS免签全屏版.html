@@ -20,8 +20,9 @@
       --bg-c3: #0b111e;
       --glass-fill: rgba(255, 255, 255, 0.14);
       --glass-stroke: rgba(255, 255, 255, 0.12);
-      --safe-top: env(safe-area-inset-top, 48px);
-      --safe-bottom: env(safe-area-inset-bottom, 34px);
+      /* 全机型/未来系统自适应安全区：兼容 iPhone 13~18 Pro Max / Ultra 及 iOS 16~27+ */
+      --safe-top: max(env(safe-area-inset-top, 0px), var(--detected-top-inset, 52px));
+      --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--detected-bottom-inset, 34px));
     }
 
     /* iOS 壁纸氛围主题 */
@@ -65,19 +66,34 @@
       -webkit-user-select: text;
     }
 
-    /* 彻底消除 iOS 17/18/26 底部黑块：html/body/shell 均使用 fixed + inset:0 + 100dvh 渐变穿透到底部安全区 */
+    /* 彻底消除 iOS 16 ~ iOS 27+ 任何机型的顶部/底部黑块：
+       使用超大溢出背景画布 ::before 穿透上下安全区，配合 100lvh/100dvh 动态视口 */
     html, body {
       position: fixed;
       inset: 0;
-      width: 100%;
+      width: 100vw;
       height: 100%;
       min-height: 100dvh;
+      min-height: 100lvh;
       min-height: -webkit-fill-available;
       overflow: hidden;
-      background: radial-gradient(125% 85% at 50% 15%, var(--bg-c2) 0%, var(--bg-c1) 50%, var(--bg-c3) 100%);
+      background-color: var(--bg-c3);
+      background-image: radial-gradient(125% 85% at 50% 15%, var(--bg-c2) 0%, var(--bg-c1) 50%, var(--bg-c3) 100%);
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
       -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: -120px;
+      bottom: -120px;
+      left: -60px;
+      right: -60px;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(125% 85% at 50% 15%, var(--bg-c2) 0%, var(--bg-c1) 50%, var(--bg-c3) 100%);
     }
 
     .ios-shell {
@@ -85,13 +101,18 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      max-width: 520px;
+      max-width: 100%;
       margin: 0 auto;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       background: radial-gradient(125% 85% at 50% 15%, var(--bg-c2) 0%, var(--bg-c1) 50%, var(--bg-c3) 100%);
       transition: background 0.45s ease;
+    }
+    @media (min-width: 600px) {
+      .ios-shell {
+        max-width: 480px;
+      }
     }
 
     /* iOS 高斯模糊背景彩球 */
@@ -604,7 +625,7 @@
       margin-bottom: 8px;
     }
     .ios-caller-title {
-      font-size: 37px;
+      font-size: clamp(32px, 8.8vw, 41px);
       font-weight: 400;
       letter-spacing: 0.4px;
       line-height: 1.18;
@@ -1088,9 +1109,9 @@
         <div>
           <h1>
             <span>iOS 模拟来电</span>
-            <span class="ver-pill" id="appVersionBadge">v1.1.0</span>
+            <span class="ver-pill" id="appVersionBadge">v1.2.0</span>
           </h1>
-          <p>已适配 iPhone 15 Pro Max / iOS 26 全屏无黑边</p>
+          <p id="deviceAdaptLabel">全机型自适应 · 支持 iPhone 13~18 系列 & iOS 16~27+</p>
         </div>
         <span class="ucn-badge">UCN MQ Z</span>
       </div>
@@ -1546,9 +1567,42 @@
   </div>
 
   <script>
-    const CURRENT_VERSION = '1.1.0';
+    const CURRENT_VERSION = '1.2.0';
     const GITHUB_VERSION_URL = 'https://xunbaodedashu.github.io/call-simulator/version.json';
     const GITHUB_API_RELEASE_URL = 'https://api.github.com/repos/xunbaodedashu/call-simulator/releases/latest';
+
+    // 自适应全系 iPhone (iPhone 13/14/15/16/17/18 标准版、Pro、Pro Max、Air、Ultra) 及 iOS 16 ~ iOS 27+ 动态视口与灵动岛安全区引擎
+    function adaptAllIosGenerations() {
+      const sw = window.screen.width || window.innerWidth;
+      const sh = window.screen.height || window.innerHeight;
+      const longEdge = Math.max(sw, sh);
+      const shortEdge = Math.min(sw, sh);
+      // 根据屏幕比例自动推导灵动岛/未来屏下摄像头顶部安全区高度 (48px ~ 62px) 与底部 Home 区域 (28px ~ 36px)
+      let topInset = 50;
+      let bottomInset = 34;
+      if (longEdge >= 950) {
+        // iPhone 16/17/18 Pro Max / Ultra (6.9" ~ 7.1" 级别超大屏)
+        topInset = 59;
+        bottomInset = 34;
+      } else if (longEdge >= 915) {
+        // iPhone 14/15/16/17/18 Plus & Pro Max (6.7" 级别大屏)
+        topInset = 56;
+        bottomInset = 34;
+      } else if (longEdge >= 840) {
+        // iPhone 15/16/17/18 / Pro (6.1" ~ 6.3" 标准灵动岛机型)
+        topInset = 52;
+        bottomInset = 34;
+      } else if (longEdge < 750) {
+        // SE 系列等紧凑屏
+        topInset = 24;
+        bottomInset = 16;
+      }
+      document.documentElement.style.setProperty('--detected-top-inset', `${topInset}px`);
+      document.documentElement.style.setProperty('--detected-bottom-inset', `${bottomInset}px`);
+    }
+    window.addEventListener('resize', adaptAllIosGenerations);
+    window.addEventListener('orientationchange', adaptAllIosGenerations);
+    adaptAllIosGenerations();
 
     const iosState = {
       screen: 'editor',
@@ -1929,9 +1983,20 @@
       saveIosConfig();
     }
 
+    const THEME_COLORS = {
+      ios18: '#0b1220',
+      titanium: '#10100f',
+      midnight: '#0a0a14',
+      alpine: '#081412',
+      oled: '#000000'
+    };
     function changeIosWallpaper() {
       const w = document.getElementById('iosWallpaper').value;
       document.body.setAttribute('data-wallpaper', w);
+      const tc = THEME_COLORS[w] || '#0b1220';
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) metaTheme.setAttribute('content', tc);
+      document.documentElement.style.backgroundColor = tc;
       saveIosConfig();
     }
 

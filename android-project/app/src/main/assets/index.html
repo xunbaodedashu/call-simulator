@@ -24,7 +24,6 @@
       --glass-active: rgba(255, 255, 255, 0.26);
     }
 
-    /* 主题壁纸配色 */
     body[data-theme="hyperos"] {
       --bg-grad-1: #102542;
       --bg-grad-2: #1b3b6f;
@@ -61,20 +60,37 @@
     }
 
     html, body {
-      width: 100%;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
       height: 100%;
+      min-height: 100dvh;
+      min-height: 100lvh;
       overflow: hidden;
-      background: #090d16;
+      background-color: var(--bg-grad-3);
+      background-image: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
     }
 
-    /* 主容器 */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -120px;
+      bottom: -120px;
+      left: -60px;
+      right: -60px;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
+    }
+
     .app-shell {
-      position: relative;
+      position: fixed;
+      inset: 0;
       width: 100%;
       height: 100%;
-      max-width: 480px;
+      max-width: 100%;
       margin: 0 auto;
       overflow: hidden;
       display: flex;
@@ -82,8 +98,12 @@
       background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
       transition: background 0.4s ease;
     }
+    @media (min-width: 600px) {
+      .app-shell {
+        max-width: 480px;
+      }
+    }
 
-    /* 背景动态柔光球（通话界面拟真氛围感） */
     .ambient-orb {
       position: absolute;
       border-radius: 50%;
@@ -133,9 +153,10 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .fake-statusbar.hidden-bar {
+    .fake-statusbar.use-native-bar .status-left,
+    .fake-statusbar.use-native-bar .status-right {
       opacity: 0;
-      height: 36px;
+      pointer-events: none;
     }
     .status-left {
       display: flex;
@@ -187,7 +208,6 @@
       border-radius: 1.5px;
     }
 
-    /* 视图切换通用 */
     .screen-view {
       position: relative;
       z-index: 10;
@@ -234,6 +254,14 @@
       align-items: center;
       gap: 8px;
     }
+    .ver-tag {
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
     .editor-title-wrap p {
       font-size: 12px;
       color: var(--text-sub);
@@ -248,6 +276,43 @@
       background: linear-gradient(135deg, rgba(59,130,246,0.28), rgba(16,185,129,0.28));
       border: 1px solid rgba(255,255,255,0.2);
       color: #e2e8f0;
+    }
+
+    /* GitHub 新版本升级横幅 */
+    .update-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.28), rgba(34, 197, 94, 0.28));
+      border: 1px solid rgba(96, 165, 250, 0.55);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .update-banner.show {
+      display: flex;
+    }
+    .update-banner h4 {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .update-banner p {
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.82);
+      margin-top: 2px;
+    }
+    .update-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: #22c55e;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      border: none;
+      white-space: nowrap;
+      cursor: pointer;
     }
 
     .card-panel {
@@ -344,7 +409,6 @@
       gap: 10px;
     }
 
-    /* 开关行 */
     .toggle-row {
       display: flex;
       align-items: center;
@@ -360,6 +424,7 @@
       border-radius: 999px;
       cursor: pointer;
       transition: background 0.2s;
+      flex-shrink: 0;
     }
     .switch-pill.on {
       background: var(--accent-green);
@@ -379,7 +444,6 @@
       transform: translateX(20px);
     }
 
-    /* 三个界面快速进入卡片 */
     .launch-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -422,25 +486,94 @@
       border-color: rgba(248, 113, 113, 0.45);
     }
 
-    .delay-bar {
-      margin-top: 9px;
+    /* 自定义多少秒后来电话 & 挂载后台区域 */
+    .custom-timer-section {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    .custom-sec-bar {
       display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+    .custom-sec-input {
+      width: 76px;
+      background: rgba(59, 130, 246, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      border-radius: 9px;
+      padding: 8px;
+      color: #60a5fa;
+      font-size: 16px;
+      font-weight: 700;
+      text-align: center;
+      outline: none;
+    }
+    .sec-quick-row {
+      display: flex;
+      gap: 5px;
+      flex: 1;
+      overflow-x: auto;
+    }
+    .sec-pill {
+      padding: 6px 9px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .sec-pill.active, .sec-pill:active {
+      background: rgba(59, 130, 246, 0.32);
+      border-color: #60a5fa;
+      color: #fff;
+    }
+    .delay-mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
-    .delay-btn {
-      flex: 1;
-      padding: 9px 10px;
+    .delay-mode-btn {
+      padding: 10px 8px;
       border-radius: 11px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.16);
       background: rgba(255,255,255,0.07);
       color: #e2e8f0;
       font-size: 12.5px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
       text-align: center;
     }
-    .delay-btn:active {
-      background: rgba(59,130,246,0.28);
+    .delay-mode-btn.bg-highlight {
+      background: linear-gradient(135deg, rgba(59,130,246,0.34), rgba(16,185,129,0.28));
+      border-color: rgba(96,165,250,0.5);
+    }
+    .delay-mode-btn small {
+      font-size: 10.5px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.68);
+    }
+    .bg-countdown-strip {
+      display: none;
+      margin-top: 9px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.18);
+      border: 1px solid rgba(74, 222, 128, 0.45);
+      color: #86efac;
+      font-size: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .bg-countdown-strip.show {
+      display: flex;
     }
 
     .Stealth-tip {
@@ -511,7 +644,6 @@
       margin-bottom: 14px;
     }
 
-    /* 状态副文案（如“来电”、“00:25”、“未接来电”） */
     .call-status-pill {
       font-size: 16px;
       font-weight: 500;
@@ -717,7 +849,6 @@
       font-weight: 400;
     }
 
-    /* 拨号键盘浮层（在已接通界面点击“键盘”可展开） */
     .dtmf-keypad-overlay {
       display: none;
       width: 100%;
@@ -845,7 +976,6 @@
       align-items: center;
     }
 
-    /* 隐蔽式底部三态快速切换胶囊（可设为完全隐藏防穿帮） */
     .quick-mode-dock {
       position: absolute;
       bottom: 10px;
@@ -879,7 +1009,6 @@
       font-weight: 600;
     }
 
-    /* 倒计时黑屏遮罩（用于延时触发来电） */
     .standby-blackout {
       position: fixed;
       inset: 0;
@@ -897,22 +1026,22 @@
       display: flex;
     }
 
-    /* 轻提示气泡 */
     .toast-tip {
       position: fixed;
       top: 52px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.88);
+      background: rgba(15, 23, 42, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.18);
       color: #f8fafc;
       padding: 7px 15px;
       border-radius: 999px;
       font-size: 12px;
-      z-index: 200;
+      z-index: 1200;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.25s;
+      white-space: nowrap;
     }
     .toast-tip.show {
       opacity: 1;
@@ -921,7 +1050,6 @@
 </head>
 <body data-theme="default">
   <div class="app-shell">
-    <!-- 背景柔光氛围球 -->
     <div class="ambient-orb orb-1"></div>
     <div class="ambient-orb orb-2"></div>
 
@@ -933,7 +1061,6 @@
       </div>
       <div class="status-right">
         <span class="status-5g">5G</span>
-        <!-- 信号满格 SVG -->
         <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
           <rect x="0.5" y="8" width="2.2" height="3.5" rx="0.6" fill="white"/>
           <rect x="4" y="6" width="2.2" height="5.5" rx="0.6" fill="white"/>
@@ -950,13 +1077,25 @@
     <section class="screen-view active" id="view-editor">
       <div class="editor-header">
         <div class="editor-title-wrap">
-          <h1>模拟来电控制台</h1>
-          <p>自由编辑来电号码与状态 · 一键切换三大界面</p>
+          <h1>
+            <span>模拟来电控制台</span>
+            <span class="ver-tag" id="verTag">v1.2.0</span>
+          </h1>
+          <p>支持挂后台定时弹出来电 · GitHub 自动检测更新</p>
         </div>
         <span class="brand-badge">UCN MQ Z</span>
       </div>
 
-      <!-- 一键进入三界面 -->
+      <!-- GitHub 自动发现新版本升级提示栏 -->
+      <div class="update-banner" id="updateBanner">
+        <div>
+          <h4 id="updateTitle">🎉 发现 GitHub 新版本</h4>
+          <p id="updateDesc">点击右侧按钮即可一键下载或更新最新版</p>
+        </div>
+        <button class="update-btn" onclick="triggerGitHubUpgrade()">立即更新</button>
+      </div>
+
+      <!-- 一键进入三界面 + 自定义秒数后台/黑屏定时来电 -->
       <div class="card-panel">
         <div class="card-section-title">
           <span>一键进入三大界面</span>
@@ -990,10 +1129,39 @@
           </button>
         </div>
 
-        <div class="delay-bar">
-          <button class="delay-btn" onclick="startDelayedIncoming(3)">⏱ 3秒后黑屏来电</button>
-          <button class="delay-btn" onclick="startDelayedIncoming(5)">⏱ 5秒后黑屏来电</button>
-          <button class="delay-btn" onclick="startDelayedIncoming(10)">⏱ 10秒后黑屏来电</button>
+        <!-- 自定义秒数 + 挂后台定时来电 / 息屏定时来电 -->
+        <div class="custom-timer-section">
+          <div class="form-label" style="margin-bottom:7px;">
+            <span>⏱ 自定义多少秒后来电话（可挂后台正常玩手机）</span>
+          </div>
+          <div class="custom-sec-bar">
+            <input type="number" id="inputCustomDelaySec" class="custom-sec-input" value="5" min="1" max="3600" />
+            <span style="font-size:13px;color:rgba(255,255,255,0.78);">秒后</span>
+            <div class="sec-quick-row">
+              <span class="sec-pill" onclick="setCustomDelaySec(3)">3秒</span>
+              <span class="sec-pill active" onclick="setCustomDelaySec(5)">5秒</span>
+              <span class="sec-pill" onclick="setCustomDelaySec(10)">10秒</span>
+              <span class="sec-pill" onclick="setCustomDelaySec(15)">15秒</span>
+              <span class="sec-pill" onclick="setCustomDelaySec(30)">30秒</span>
+              <span class="sec-pill" onclick="setCustomDelaySec(60)">60秒</span>
+            </div>
+          </div>
+
+          <div class="delay-mode-grid">
+            <button class="delay-mode-btn bg-highlight" onclick="startScheduledIncoming('background')">
+              <span>📲 挂后台定时弹出来电</span>
+              <small>自动退到桌面/别的APP，到点弹出</small>
+            </button>
+            <button class="delay-mode-btn" onclick="startScheduledIncoming('blackout')">
+              <span>🌑 息屏黑屏定时来电</span>
+              <small>纯黑锁屏待机，到点亮屏响铃</small>
+            </button>
+          </div>
+
+          <div class="bg-countdown-strip" id="bgCountdownStrip">
+            <span id="bgCountdownText">⏳ 后台来电倒计时：5 秒后弹出...</span>
+            <span style="text-decoration:underline;cursor:pointer;" onclick="cancelScheduledIncoming()">取消</span>
+          </div>
         </div>
       </div>
 
@@ -1095,10 +1263,11 @@
         </div>
       </div>
 
-      <!-- 音效、震动与防穿帮设置 -->
+      <!-- 音效、震动与 GitHub 自动更新设置 -->
       <div class="card-panel">
         <div class="card-section-title">
-          <span>拍摄防穿帮与声效控制</span>
+          <span>声效、防穿帮与 GitHub 更新</span>
+          <span style="color:#60a5fa;cursor:pointer;text-transform:none;" onclick="checkGitHubReleaseUpdate(true)">🔄 检查 GitHub 更新</span>
         </div>
 
         <div class="toggle-row" onclick="toggleSwitch('ringtone')">
@@ -1139,7 +1308,6 @@
       </div>
 
       <div class="incoming-bottom-area">
-        <!-- 提醒我 / 短信回复 -->
         <div class="quick-aux-row">
           <div class="aux-action-item" onclick="showQuickToast('已设置稍后提醒')">
             <div class="aux-icon-circle">
@@ -1160,11 +1328,9 @@
           </div>
         </div>
 
-        <!-- 拒绝 / 接听 双圆大键 -->
         <div class="incoming-main-buttons">
           <div class="round-call-btn-wrap">
             <button class="round-call-btn btn-decline" onclick="handleDeclineIncoming()" aria-label="拒绝">
-              <!-- 挂断电话图标 -->
               <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
               </svg>
@@ -1174,7 +1340,6 @@
 
           <div class="round-call-btn-wrap">
             <button class="round-call-btn btn-accept" onclick="handleAcceptIncoming()" aria-label="接听">
-              <!-- 接听电话图标 -->
               <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
               </svg>
@@ -1201,9 +1366,7 @@
       </div>
 
       <div class="incall-controls-wrap">
-        <!-- 六宫格功能区 -->
         <div class="incall-grid-6" id="incallGrid6">
-          <!-- 1. 录音 -->
           <div class="tool-btn-item" id="tool-record" onclick="toggleInCallTool('record')">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1214,7 +1377,6 @@
             <span class="tool-label" id="label-record">录音</span>
           </div>
 
-          <!-- 2. 静音 -->
           <div class="tool-btn-item" id="tool-mute" onclick="toggleInCallTool('mute')">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1228,7 +1390,6 @@
             <span class="tool-label">静音</span>
           </div>
 
-          <!-- 3. 免提 -->
           <div class="tool-btn-item" id="tool-speaker" onclick="toggleInCallTool('speaker')">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1240,7 +1401,6 @@
             <span class="tool-label">免提</span>
           </div>
 
-          <!-- 4. 添加通话 -->
           <div class="tool-btn-item" id="tool-add" onclick="toggleInCallTool('add')">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1251,7 +1411,6 @@
             <span class="tool-label">添加通话</span>
           </div>
 
-          <!-- 5. 视频通话 -->
           <div class="tool-btn-item" id="tool-video" onclick="toggleInCallTool('video')">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -1262,7 +1421,6 @@
             <span class="tool-label">视频通话</span>
           </div>
 
-          <!-- 6. 拨号键盘 -->
           <div class="tool-btn-item" id="tool-keypad" onclick="toggleDtmfKeypad(true)">
             <div class="tool-circle">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -1275,7 +1433,6 @@
           </div>
         </div>
 
-        <!-- 可展开 DTMF 拨号盘 -->
         <div class="dtmf-keypad-overlay" id="dtmfKeypad">
           <div class="dtmf-typed-display" id="dtmfDisplay"></div>
           <div class="dtmf-grid">
@@ -1294,7 +1451,6 @@
           </div>
         </div>
 
-        <!-- 底部中央红色挂断按钮 -->
         <div class="dtmf-bottom-row" style="justify-content: center; position: relative;">
           <button class="round-call-btn btn-decline" onclick="handleHangupConnected()" aria-label="挂断">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(135deg);">
@@ -1319,7 +1475,6 @@
         <div class="caller-secondary-phone" id="unc-secondary" style="display:none;">138 0013 8000</div>
         <div class="caller-location" id="unc-location">北京 移动</div>
 
-        <!-- 点击状态胶囊也可快速轮换未接通文案 -->
         <div class="unconnected-status-badge" id="unc-status-badge" onclick="cycleUnconnectedStatus()" title="点击可快速切换状态文案">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="16 2 22 2 22 8"/>
@@ -1330,7 +1485,6 @@
         </div>
       </div>
 
-      <!-- 未接通详情卡片 -->
       <div class="unconnected-detail-card">
         <div class="unconnected-detail-row">
           <span>通话状态</span>
@@ -1346,10 +1500,8 @@
         </div>
       </div>
 
-      <!-- 底部回拨 / 发短信 / 返回按钮 -->
       <div class="unconnected-bottom-actions">
         <div class="unconnected-btn-row">
-          <!-- 发短信 -->
           <div class="round-call-btn-wrap">
             <button class="round-call-btn" style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);" onclick="showQuickToast('已打开短信回复')" aria-label="发短信">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1359,7 +1511,6 @@
             <span class="round-call-btn-label">发送短信</span>
           </div>
 
-          <!-- 立即重拨（进入已接通或来电） -->
           <div class="round-call-btn-wrap">
             <button class="round-call-btn btn-accept" style="animation:none;" onclick="enterCallScreen('connected')" aria-label="回拨">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
@@ -1369,7 +1520,6 @@
             <span class="round-call-btn-label">立即回拨</span>
           </div>
 
-          <!-- 关闭/返回 -->
           <div class="round-call-btn-wrap">
             <button class="round-call-btn" style="background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);" onclick="returnToEditor()" aria-label="关闭">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1383,7 +1533,6 @@
       </div>
     </section>
 
-    <!-- 可选底部悬浮切换条（默认隐藏以防穿帮，可在设置中打开方便调试） -->
     <div class="quick-mode-dock stealth-hidden" id="quickModeDock">
       <button class="dock-pill" id="dock-editor" onclick="returnToEditor()">编辑台</button>
       <button class="dock-pill" id="dock-incoming" onclick="enterCallScreen('incoming')">来电显示</button>
@@ -1391,21 +1540,19 @@
       <button class="dock-pill" id="dock-unconnected" onclick="enterCallScreen('unconnected')">未接通</button>
     </div>
 
-    <!-- 延时来电黑屏息屏层 -->
-    <div class="standby-blackout" id="standbyOverlay" onclick="cancelDelayedIncoming()">
-      <div id="standbyCountdownText">息屏待机中 · 3 秒后触发来电（点击屏幕取消）</div>
+    <div class="standby-blackout" id="standbyOverlay" onclick="cancelScheduledIncoming()">
+      <div id="standbyCountdownText">息屏待机中 · 5 秒后触发来电（点击屏幕取消）</div>
     </div>
 
-    <!-- 轻提示 -->
     <div class="toast-tip" id="toastTip"></div>
   </div>
 
   <script>
-    // =====================================================
-    // 状态管理与持久化
-    // =====================================================
+    const APP_VERSION = '1.2.0';
+    const GITHUB_VERSION_JSON = 'https://xunbaodedashu.github.io/call-simulator/version.json';
+
     const appState = {
-      currentScreen: 'editor', // 'editor' | 'incoming' | 'connected' | 'unconnected'
+      currentScreen: 'editor',
       ringtoneEnabled: true,
       vibrateEnabled: true,
       stealthDockHidden: true,
@@ -1414,14 +1561,13 @@
       recordSeconds: 0,
       recordInterval: null,
       ringAudioInterval: null,
-      standbyTimeout: null,
-      standbyTickInterval: null,
+      schedTargetTime: 0,
+      schedInterval: null,
       audioCtx: null,
       lastTopTapTime: 0,
       lastBackPressTime: 0
     };
 
-    // 初始化时钟
     function updateClock() {
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, '0');
@@ -1432,7 +1578,6 @@
     setInterval(updateClock, 5000);
     updateClock();
 
-    // 顶部状态栏双击返回编辑控制台（防穿帮设计）
     document.getElementById('topStatusBar').addEventListener('click', () => {
       if (appState.currentScreen === 'editor') return;
       const now = Date.now();
@@ -1442,7 +1587,6 @@
       appState.lastTopTapTime = now;
     });
 
-    // 保存与读取本地配置
     function saveConfigToStorage() {
       try {
         const cfg = {
@@ -1454,17 +1598,18 @@
           startTimer: document.getElementById('inputStartTimer').value,
           unconnectedText: document.getElementById('inputUnconnectedText').value,
           unconnectedReason: document.getElementById('inputUnconnectedReason').value,
+          customDelaySec: document.getElementById('inputCustomDelaySec').value,
           ringtoneEnabled: appState.ringtoneEnabled,
           vibrateEnabled: appState.vibrateEnabled,
           stealthDockHidden: appState.stealthDockHidden
         };
-        localStorage.setItem('ucn_call_sim_cfg_v1', JSON.stringify(cfg));
+        localStorage.setItem('ucn_call_sim_cfg_v2', JSON.stringify(cfg));
       } catch (e) {}
     }
 
     function loadConfigFromStorage() {
       try {
-        const raw = localStorage.getItem('ucn_call_sim_cfg_v1');
+        const raw = localStorage.getItem('ucn_call_sim_cfg_v2') || localStorage.getItem('ucn_call_sim_cfg_v1');
         if (!raw) return;
         const cfg = JSON.parse(raw);
         if (cfg.phone !== undefined) document.getElementById('inputPhone').value = cfg.phone;
@@ -1478,6 +1623,7 @@
         if (cfg.startTimer !== undefined) document.getElementById('inputStartTimer').value = cfg.startTimer;
         if (cfg.unconnectedText !== undefined) document.getElementById('inputUnconnectedText').value = cfg.unconnectedText;
         if (cfg.unconnectedReason !== undefined) document.getElementById('inputUnconnectedReason').value = cfg.unconnectedReason;
+        if (cfg.customDelaySec !== undefined) document.getElementById('inputCustomDelaySec').value = cfg.customDelaySec;
         if (typeof cfg.ringtoneEnabled === 'boolean') {
           appState.ringtoneEnabled = cfg.ringtoneEnabled;
           document.getElementById('sw-ringtone').classList.toggle('on', cfg.ringtoneEnabled);
@@ -1494,7 +1640,6 @@
       } catch (e) {}
     }
 
-    // 快捷填入预设号码
     function setQuickCaller(phone, name, loc) {
       document.getElementById('inputPhone').value = phone;
       document.getElementById('inputName').value = name;
@@ -1503,7 +1648,6 @@
       showQuickToast(`已填入：${phone}`);
     }
 
-    // 一键 3-4-4 手机号空格格式化
     function formatPhoneInput() {
       const el = document.getElementById('inputPhone');
       const digits = el.value.replace(/\s+/g, '');
@@ -1515,7 +1659,6 @@
       saveConfigToStorage();
     }
 
-    // 快捷切换未接通文案预设
     function setUnconnectedPreset(statusText, reasonText) {
       document.getElementById('inputUnconnectedText').value = statusText;
       document.getElementById('inputUnconnectedReason').value = reasonText;
@@ -1523,14 +1666,12 @@
       showQuickToast(`未接通状态设为：${statusText}`);
     }
 
-    // 切换主题色
     function applyThemeChange() {
       const theme = document.getElementById('inputTheme').value;
       document.body.setAttribute('data-theme', theme);
       saveConfigToStorage();
     }
 
-    // 开关组件
     function toggleSwitch(key) {
       if (key === 'ringtone') {
         appState.ringtoneEnabled = !appState.ringtoneEnabled;
@@ -1555,7 +1696,6 @@
       }
     }
 
-    // 将编辑台的数据同步渲染到三个通话界面
     function syncCallerInfoToScreens() {
       saveConfigToStorage();
       const rawPhone = document.getElementById('inputPhone').value.trim() || '未知号码';
@@ -1564,7 +1704,6 @@
       const simVal = document.getElementById('inputSimTag').value || '|';
       const [simText, hdText] = simVal.split('|');
 
-      // 顶部运营商同步
       const carrierMatch = rawLoc.match(/(移动|联通|电信|广电)/);
       document.getElementById('statusCarrierTop').textContent = carrierMatch ? `中国${carrierMatch[1]}` : '中国移动';
 
@@ -1596,7 +1735,6 @@
         simRow.style.display = (simText || hdText) ? 'inline-flex' : 'none';
       });
 
-      // 未接通界面专属文字
       const uncText = document.getElementById('inputUnconnectedText').value.trim() || '未接来电';
       const uncReason = document.getElementById('inputUnconnectedReason').value.trim() || '响铃 1 声后挂断';
       document.getElementById('unc-status-text').textContent = uncText;
@@ -1604,7 +1742,6 @@
       document.getElementById('unc-card-loc').textContent = rawLoc || '未知归属地';
     }
 
-    // 解析 MM:SS 为秒数
     function parseStartSeconds(str) {
       const clean = (str || '00:00').trim();
       if (/^\d+$/.test(clean)) return parseInt(clean, 10);
@@ -1626,9 +1763,6 @@
       return hrs > 0 ? `${String(hrs).padStart(2, '0')}:${mm}:${ss}` : `${mm}:${ss}`;
     }
 
-    // =====================================================
-    // 合成铃声与震动引擎（无需外部 MP3，离线100%可用）
-    // =====================================================
     function ensureAudioCtx() {
       if (!appState.audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -1726,25 +1860,19 @@
       }
     }
 
-    // =====================================================
-    // 切换三大界面核心逻辑
-    // =====================================================
     function enterCallScreen(mode, optionalToast) {
       stopAllEffects();
       syncCallerInfoToScreens();
       appState.currentScreen = mode;
 
-      // 切换视图可见性
       document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
       document.getElementById(`view-${mode}`).classList.add('active');
 
-      // 更新底部悬浮切换胶囊高亮
       document.querySelectorAll('.dock-pill').forEach(el => el.classList.remove('active'));
       const activeDock = document.getElementById(`dock-${mode}`);
       if (activeDock) activeDock.classList.add('active');
       updateDockVisibility();
 
-      // 通知原生 Android 开启全屏沉浸防穿帮
       if (window.AndroidBridge && window.AndroidBridge.setImmersive) {
         window.AndroidBridge.setImmersive(true);
       }
@@ -1779,19 +1907,16 @@
       }
     }
 
-    // 来电界面：点击「接听」 -> 进入「已接通」
     function handleAcceptIncoming() {
       triggerShortVibrate(55);
       enterCallScreen('connected');
     }
 
-    // 来电界面：点击「拒绝」 -> 进入「未接通」
     function handleDeclineIncoming() {
       triggerShortVibrate(45);
       enterCallScreen('unconnected');
     }
 
-    // 已接通界面：点击「挂断」 -> 更新未接通页为通话结束并跳转「未接通」
     function handleHangupConnected() {
       triggerShortVibrate(50);
       const finalDur = formatDuration(appState.timerSeconds);
@@ -1805,7 +1930,6 @@
       playShortTone(340, 200);
     }
 
-    // 在「未接通」界面点击状态胶囊快速轮换不同未接通文案
     const unconnectedPresets = [
       { status: '未接来电', reason: '响铃 1 声后挂断' },
       { status: '无人接听', reason: '对方暂时无法接听' },
@@ -1824,7 +1948,6 @@
       saveConfigToStorage();
     }
 
-    // 已接通界面六宫格按钮交互
     function toggleInCallTool(toolName) {
       triggerShortVibrate(25);
       const el = document.getElementById(`tool-${toolName}`);
@@ -1849,7 +1972,6 @@
       }
     }
 
-    // 拨号盘开关与按键音
     function toggleDtmfKeypad(show) {
       const grid6 = document.getElementById('incallGrid6');
       const pad = document.getElementById('dtmfKeypad');
@@ -1873,58 +1995,136 @@
       disp.textContent = (disp.textContent + ch).slice(-16);
     }
 
-    // 延时黑屏触发来电（适合放下手机拍摄自己响起）
-    function startDelayedIncoming(seconds) {
+    // =====================================================
+    // 自定义秒数定时来电（挂后台自动拉起 + 息屏黑屏待机）
+    // =====================================================
+    function setCustomDelaySec(sec) {
+      document.getElementById('inputCustomDelaySec').value = sec;
+      document.querySelectorAll('.sec-pill').forEach(el => {
+        el.classList.toggle('active', el.textContent === `${sec}秒`);
+      });
       saveConfigToStorage();
-      const overlay = document.getElementById('standbyOverlay');
-      const textEl = document.getElementById('standbyCountdownText');
-      let remain = seconds;
-      overlay.classList.add('active');
-      textEl.textContent = `息屏待机中 · ${remain} 秒后触发来电（点击取消）`;
-
-      // 1.5秒后把提示字淡去，让屏幕完全纯黑像真锁屏一样
-      setTimeout(() => {
-        if (overlay.classList.contains('active')) {
-          textEl.style.opacity = '0.02';
-        }
-      }, 1500);
-
-      appState.standbyTickInterval = setInterval(() => {
-        remain--;
-        if (remain > 0) {
-          textEl.textContent = `息屏待机中 · ${remain} 秒后触发来电`;
-        }
-      }, 1000);
-
-      appState.standbyTimeout = setTimeout(() => {
-        cancelDelayedIncoming();
-        enterCallScreen('incoming');
-      }, seconds * 1000);
     }
 
-    function cancelDelayedIncoming() {
-      const overlay = document.getElementById('standbyOverlay');
-      const textEl = document.getElementById('standbyCountdownText');
-      overlay.classList.remove('active');
-      textEl.style.opacity = '1';
-      if (appState.standbyTimeout) clearTimeout(appState.standbyTimeout);
-      if (appState.standbyTickInterval) clearInterval(appState.standbyTickInterval);
+    function startScheduledIncoming(mode) {
+      cancelScheduledIncoming();
+      syncCallerInfoToScreens();
+      ensureAudioCtx();
+
+      const seconds = Math.max(1, parseInt(document.getElementById('inputCustomDelaySec').value, 10) || 5);
+      appState.schedTargetTime = Date.now() + seconds * 1000;
+
+      if (mode === 'blackout') {
+        const overlay = document.getElementById('standbyOverlay');
+        const textEl = document.getElementById('standbyCountdownText');
+        overlay.classList.add('active');
+        textEl.style.opacity = '1';
+        textEl.textContent = `息屏待机中 · ${seconds} 秒后触发来电（点击取消）`;
+        setTimeout(() => {
+          if (overlay.classList.contains('active')) textEl.style.opacity = '0.02';
+        }, 1500);
+      } else {
+        // 挂后台模式：如果跑在原生 Android APK 中，调用 AndroidBridge 自动退到桌面并在指定秒数后把 Activity 拉回最前端弹出！
+        document.getElementById('bgCountdownStrip').classList.add('show');
+        if (window.AndroidBridge && window.AndroidBridge.scheduleBackgroundCall) {
+          window.AndroidBridge.scheduleBackgroundCall(seconds);
+          showQuickToast(`已挂入后台：${seconds} 秒后将自动弹出全屏来电！`);
+        } else {
+          showQuickToast(`已启动 ${seconds} 秒倒计时，到点自动弹出来电`);
+        }
+      }
+
+      appState.schedInterval = setInterval(() => {
+        const remainMs = appState.schedTargetTime - Date.now();
+        const remainSec = Math.ceil(remainMs / 1000);
+        if (remainMs <= 0) {
+          cancelScheduledIncoming();
+          enterCallScreen('incoming');
+        } else {
+          document.getElementById('bgCountdownText').textContent = `⏳ 后台来电倒计时：${remainSec} 秒后弹出...`;
+          document.getElementById('standbyCountdownText').textContent = `息屏待机中 · ${remainSec} 秒后触发来电`;
+        }
+      }, 250);
     }
 
-    // 轻提示气泡
+    function cancelScheduledIncoming() {
+      if (appState.schedInterval) {
+        clearInterval(appState.schedInterval);
+        appState.schedInterval = null;
+      }
+      appState.schedTargetTime = 0;
+      document.getElementById('standbyOverlay').classList.remove('active');
+      document.getElementById('bgCountdownStrip').classList.remove('show');
+      if (window.AndroidBridge && window.AndroidBridge.cancelBackgroundCall) {
+        window.AndroidBridge.cancelBackgroundCall();
+      }
+    }
+
+    // 供原生 Android 后台定时器到点唤醒时直接触发
+    window.onAndroidBackgroundAlarmFired = function () {
+      cancelScheduledIncoming();
+      enterCallScreen('incoming');
+    };
+
+    // =====================================================
+    // GitHub 自动扫描更新
+    // =====================================================
+    let latestReleaseData = null;
+    async function checkGitHubReleaseUpdate(manual = false) {
+      if (manual) showQuickToast('正在连接 GitHub 扫描最新版本...');
+      try {
+        const res = await fetch(`${GITHUB_VERSION_JSON}?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.version && compareVer(data.version, APP_VERSION) > 0) {
+            latestReleaseData = data;
+            const banner = document.getElementById('updateBanner');
+            document.getElementById('updateTitle').textContent = `🎉 发现 GitHub 新版本 v${data.version}`;
+            document.getElementById('updateDesc').textContent = data.notes || '点击右侧立即下载安装最新 APK';
+            banner.classList.add('show');
+            if (manual) showQuickToast(`发现新版本 v${data.version}！`);
+            return;
+          }
+        }
+        if (manual) showQuickToast(`当前已是最新版本 v${APP_VERSION}`);
+      } catch (e) {
+        if (manual) showQuickToast('检查完成：当前已是最新版本');
+      }
+    }
+
+    function compareVer(v1, v2) {
+      const a = String(v1).replace(/^v/, '').split('.').map(Number);
+      const b = String(v2).replace(/^v/, '').split('.').map(Number);
+      for (let i = 0; i < Math.max(a.length, b.length); i++) {
+        const d = (a[i] || 0) - (b[i] || 0);
+        if (d !== 0) return d;
+      }
+      return 0;
+    }
+
+    function triggerGitHubUpgrade() {
+      const apkUrl = (latestReleaseData && latestReleaseData.apkUrl)
+        ? latestReleaseData.apkUrl
+        : 'https://github.com/xunbaodedashu/call-simulator/releases/latest/download/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk';
+      if (window.AndroidBridge && window.AndroidBridge.openExternalUrl) {
+        window.AndroidBridge.openExternalUrl(apkUrl);
+      } else {
+        window.location.href = apkUrl;
+      }
+    }
+
     let toastTimer = null;
     function showQuickToast(msg) {
       const el = document.getElementById('toastTip');
       el.textContent = msg;
       el.classList.add('show');
       if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1900);
     }
 
-    // 供 Android 原生物理返回键调用的钩子
     window.handleAndroidBackKey = function () {
       if (document.getElementById('standbyOverlay').classList.contains('active')) {
-        cancelDelayedIncoming();
+        cancelScheduledIncoming();
         return true;
       }
       if (appState.currentScreen !== 'editor') {
@@ -1943,9 +2143,9 @@
       return false;
     };
 
-    // 页面加载完成后恢复历史设置
     loadConfigFromStorage();
     syncCallerInfoToScreens();
+    setTimeout(() => checkGitHubReleaseUpdate(false), 1200);
   </script>
 </body>
 </html>

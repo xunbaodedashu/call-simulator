@@ -62,12 +62,27 @@
     html, body {
       position: fixed;
       inset: 0;
-      width: 100%;
+      width: 100vw;
       height: 100%;
+      min-height: 100dvh;
+      min-height: 100lvh;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
+      background-color: var(--bg-grad-3);
+      background-image: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: -120px;
+      bottom: -120px;
+      left: -60px;
+      right: -60px;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
     }
 
     .app-shell {
@@ -75,13 +90,18 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      max-width: 520px;
+      max-width: 100%;
       margin: 0 auto;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       background: radial-gradient(circle at 50% 22%, var(--bg-grad-2) 0%, var(--bg-grad-1) 52%, var(--bg-grad-3) 100%);
       transition: background 0.4s ease;
+    }
+    @media (min-width: 600px) {
+      .app-shell {
+        max-width: 480px;
+      }
     }
 
     .ambient-orb {
@@ -1059,7 +1079,7 @@
         <div class="editor-title-wrap">
           <h1>
             <span>模拟来电控制台</span>
-            <span class="ver-tag" id="verTag">v1.1.0</span>
+            <span class="ver-tag" id="verTag">v1.2.0</span>
           </h1>
           <p>支持挂后台定时弹出来电 · GitHub 自动检测更新</p>
         </div>
@@ -1528,7 +1548,7 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.1.0';
+    const APP_VERSION = '1.2.0';
     const GITHUB_VERSION_JSON = 'https://xunbaodedashu.github.io/call-simulator/version.json';
 
     const appState = {
