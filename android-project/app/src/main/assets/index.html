@@ -1046,6 +1046,88 @@
     .toast-tip.show {
       opacity: 1;
     }
+
+    /* 关于软件卡片与弹窗 */
+    .about-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 13.5px;
+      color: rgba(255,255,255,0.85);
+    }
+    .about-row:last-child {
+      border-bottom: none;
+      padding-bottom: 2px;
+    }
+    .about-email {
+      color: #60a5fa;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .about-modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.68);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .about-modal-mask.show {
+      display: flex;
+    }
+    .about-modal-card {
+      width: 100%;
+      max-width: 340px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 18px;
+      padding: 22px 20px 18px;
+      text-align: center;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    }
+    .about-modal-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .about-modal-card p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.72);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .about-email-box {
+      padding: 10px 14px;
+      border-radius: 11px;
+      background: rgba(59, 130, 246, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.4);
+      color: #60a5fa;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+    .about-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 11px;
+      background: #3b82f6;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body data-theme="default">
@@ -1079,11 +1161,11 @@
         <div class="editor-title-wrap">
           <h1>
             <span>模拟来电控制台</span>
-            <span class="ver-tag" id="verTag">v1.2.0</span>
+            <span class="ver-tag" id="verTag">v1.3.0</span>
           </h1>
           <p>支持挂后台定时弹出来电 · GitHub 自动检测更新</p>
         </div>
-        <span class="brand-badge">UCN MQ Z</span>
+        <span class="brand-badge" onclick="toggleAndroidAbout(true)" style="cursor:pointer;" title="点击查看关于软件">关于 · UCN MQ Z</span>
       </div>
 
       <!-- GitHub 自动发现新版本升级提示栏 -->
@@ -1281,6 +1363,22 @@
         <div class="toggle-row" onclick="toggleSwitch('stealthDock')">
           <span>隐藏底部快捷切换条（纯净无穿帮模式）</span>
           <div class="switch-pill on" id="sw-stealthDock"></div>
+        </div>
+      </div>
+
+      <!-- 关于软件与联系我们 -->
+      <div class="card-panel">
+        <div class="card-section-title">
+          <span>关于软件 (About)</span>
+          <span style="color:#60a5fa;cursor:pointer;text-transform:none;" onclick="toggleAndroidAbout(true)">详情 ➔</span>
+        </div>
+        <div class="about-row">
+          <span>软件版本</span>
+          <span style="color:rgba(255,255,255,0.68);">v1.3.0 (UCN MQ Z)</span>
+        </div>
+        <div class="about-row">
+          <span>联系我们</span>
+          <span class="about-email" onclick="copyAndroidContactEmail()">bottlezone@163.com (点击复制)</span>
         </div>
       </div>
 
@@ -1545,10 +1643,26 @@
     </div>
 
     <div class="toast-tip" id="toastTip"></div>
+
+    <!-- 关于软件弹窗 -->
+    <div class="about-modal-mask" id="androidAboutModal" onclick="if(event.target===this)toggleAndroidAbout(false)">
+      <div class="about-modal-card">
+        <div style="font-size:32px;margin-bottom:6px;">📞</div>
+        <h3>模拟来电助手 v1.3.0</h3>
+        <p>UCN MQ Z 专属定制版<br/>支持来电显示 / 已接通 / 未接通三大界面与后台定时弹出</p>
+        <div class="about-email-box" onclick="copyAndroidContactEmail()">
+          ✉️ 联系我们：bottlezone@163.com
+        </div>
+        <div style="display:flex;gap:8px;">
+          <a href="mailto:bottlezone@163.com" class="about-btn" style="background:rgba(255,255,255,0.12);">发送邮件</a>
+          <button class="about-btn" onclick="toggleAndroidAbout(false)">我知道了</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const APP_VERSION = '1.2.0';
+    const APP_VERSION = '1.3.0';
     const GITHUB_VERSION_JSON = 'https://xunbaodedashu.github.io/call-simulator/version.json';
 
     const appState = {
@@ -2120,6 +2234,33 @@
       el.classList.add('show');
       if (toastTimer) clearTimeout(toastTimer);
       toastTimer = setTimeout(() => el.classList.remove('show'), 1900);
+    }
+
+    function toggleAndroidAbout(show) {
+      document.getElementById('androidAboutModal').classList.toggle('show', !!show);
+    }
+
+    function copyAndroidContactEmail() {
+      const email = 'bottlezone@163.com';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(() => {
+          showQuickToast('已复制联系邮箱：bottlezone@163.com');
+        }).catch(() => {
+          fallbackCopyAndroid(email);
+        });
+      } else {
+        fallbackCopyAndroid(email);
+      }
+    }
+
+    function fallbackCopyAndroid(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      showQuickToast('已复制联系邮箱：bottlezone@163.com');
     }
 
     window.handleAndroidBackKey = function () {

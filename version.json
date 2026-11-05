@@ -1,8 +1,8 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "releaseDate": "2026-11-05",
-  "notes": "v1.2.0：搭载全代际自适应视口与安全区引擎（全面适配 iPhone 13~18 Pro Max/Ultra 与 iOS 16~27+ 全系统，100lvh/dvh 溢出渐变层彻底杜绝任何新机型顶底黑块）。",
-  "apkUrl": "https://github.com/xunbaodedashu/call-simulator/releases/download/v1.2.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk",
+  "notes": "v1.3.0：新增「关于软件」界面与弹窗，加入官方联系邮箱（联系我们：bottlezone@163.com，支持一键复制与发送邮件）。",
+  "apkUrl": "https://github.com/xunbaodedashu/call-simulator/releases/download/v1.3.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk",
   "iosUrl": "https://xunbaodedashu.github.io/call-simulator/ios.html",
   "mobileconfigUrl": "https://xunbaodedashu.github.io/call-simulator/ios-install.mobileconfig"
 }

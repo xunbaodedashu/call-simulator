@@ -42,3 +42,10 @@
 ### 🤖 Android 安装
 - 直接下载仓库根目录或 Releases 中的 [`模拟来电_UCN_MQ_Z.apk`](./模拟来电_UCN_MQ_Z.apk) 安装即可（支持 Android 7.0 ~ 15+，已含 v2/v3 正式签名）。
 - 如需二次修改打包，在 Windows 下运行 `android-project/一键编译APK.ps1` 即可快速重新生成签名 APK。
+
+---
+
+## ✉️ 联系我们
+
+- **联系邮箱**：[bottlezone@163.com](mailto:bottlezone@163.com)
+
