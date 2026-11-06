@@ -1192,20 +1192,23 @@
         <div>
           <h1>
             <span>iOS 模拟来电</span>
-            <span class="ver-pill" id="appVersionBadge">v1.3.0</span>
+            <span class="ver-pill" id="appVersionBadge">v1.4.0</span>
           </h1>
           <p id="deviceAdaptLabel">全机型自适应 · 支持 iPhone 13~18 系列 & iOS 16~27+</p>
         </div>
         <span class="ucn-badge" onclick="toggleAboutModal(true)" style="cursor:pointer;" title="点击查看关于软件">关于 · UCN MQ Z</span>
       </div>
 
-      <!-- GitHub 自动发现新版本提示栏 -->
+      <!-- 多源自动发现新版本提示栏 -->
       <div class="update-alert-card" id="updateAlertCard">
         <div class="update-info">
-          <h4 id="updateAlertTitle">🎉 发现 GitHub 新版本</h4>
+          <h4 id="updateAlertTitle">🎉 发现新版本</h4>
           <p id="updateAlertDesc">点击右侧按钮即可一键自动更新到最新版</p>
         </div>
-        <button class="update-now-btn" onclick="applyOnlineUpdate()">立即更新</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="update-now-btn" onclick="applyOnlineUpdate('auto')">立即更新</button>
+          <button class="update-now-btn" style="background:rgba(255,255,255,0.18);" onclick="applyOnlineUpdate('gitcode')" title="从国内 GitCode 镜像获取">国内源</button>
+        </div>
       </div>
 
       <!-- 一键进入三大界面 + 自定义秒数定时来电 -->
@@ -1376,10 +1379,10 @@
         </div>
       </div>
 
-      <!-- 铃声与 GitHub 自动更新设置 -->
+      <!-- 铃声与多源自动更新设置 -->
       <div class="ios-group-card">
         <div class="group-header">
-          <span>声音、状态栏与 GitHub 自动更新</span>
+          <span>声音、状态栏与多源自动更新 (GitHub/GitCode)</span>
           <span style="color:#64d2ff;cursor:pointer;" onclick="checkGitHubUpdate(true)">🔄 立即检查更新</span>
         </div>
         <div class="ios-switch-row" onclick="toggleIosAudio()">
@@ -1400,7 +1403,15 @@
         </div>
         <div class="about-info-row">
           <span>软件版本</span>
-          <span style="color:rgba(255,255,255,0.65);">v1.3.0 (UCN MQ Z)</span>
+          <span style="color:rgba(255,255,255,0.65);">v1.4.0 (UCN MQ Z)</span>
+        </div>
+        <div class="about-info-row">
+          <span>更新源仓库</span>
+          <span style="font-size:12px;">
+            <a href="https://github.com/xunbaodedashu/call-simulator" target="_blank" style="color:#64d2ff;text-decoration:none;">GitHub</a>
+            <span style="opacity:0.4;"> / </span>
+            <a href="https://gitcode.com/xunbaodedashu/call-simulator" target="_blank" style="color:#4ade80;text-decoration:none;">GitCode 国内镜像</a>
+          </span>
         </div>
         <div class="about-info-row">
           <span>联系我们</span>
@@ -1668,10 +1679,14 @@
     <div class="about-modal-backdrop" id="aboutModal" onclick="if(event.target===this)toggleAboutModal(false)">
       <div class="about-modal-box">
         <div style="font-size:32px;margin-bottom:6px;">📞</div>
-        <h3>模拟来电助手 v1.3.0</h3>
-        <p>UCN MQ Z 专属定制版<br/>支持 iPhone 全系列 (13~18 Pro Max/Ultra) 与 iOS 16~27+ 及安卓双平台全屏模拟</p>
+        <h3>模拟来电助手 v1.4.0</h3>
+        <p>UCN MQ Z 专属定制版<br/>支持 iPhone 全系列 (13~18 Pro Max/Ultra) 与 iOS 16~27+ 及安卓双平台全屏模拟<br/>已内置 GitHub + GitCode 多源自动降级更新</p>
         <div class="about-email-pill" onclick="copyContactEmail()">
           <span>✉️ 联系我们：bottlezone@163.com</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <a href="https://gitcode.com/xunbaodedashu/call-simulator/releases" target="_blank" class="about-close-btn" style="background:rgba(48,209,88,0.22);color:#4ade80;text-decoration:none;flex:1;font-size:13px;">GitCode 国内源</a>
+          <a href="https://github.com/xunbaodedashu/call-simulator/releases" target="_blank" class="about-close-btn" style="background:rgba(255,255,255,0.12);text-decoration:none;flex:1;font-size:13px;">GitHub 国际源</a>
         </div>
         <div style="display:flex;gap:8px;">
           <a href="mailto:bottlezone@163.com" class="about-close-btn" style="background:rgba(255,255,255,0.14);text-decoration:none;flex:1;">发送邮件</a>
@@ -1682,9 +1697,19 @@
   </div>
 
   <script>
-    const CURRENT_VERSION = '1.3.0';
-    const GITHUB_VERSION_URL = 'https://xunbaodedashu.github.io/call-simulator/version.json';
-    const GITHUB_API_RELEASE_URL = 'https://api.github.com/repos/xunbaodedashu/call-simulator/releases/latest';
+    const CURRENT_VERSION = '1.4.0';
+    // 多源自动降级更新地址池（GitHub Pages -> GitCode API Raw (ACAO:*) -> jsDelivr CDN -> ghfast 镜像 -> GitHub Raw）
+    const VERSION_SOURCES = [
+      { name: 'GitHub Pages', url: 'https://xunbaodedashu.github.io/call-simulator/version.json', provider: 'github' },
+      { name: 'GitCode API', url: 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/version.json?ref=main', provider: 'gitcode' },
+      { name: 'jsDelivr CDN', url: 'https://cdn.jsdelivr.net/gh/xunbaodedashu/call-simulator@main/version.json', provider: 'jsdelivr' },
+      { name: 'GHFast Mirror', url: 'https://ghfast.top/https://raw.githubusercontent.com/xunbaodedashu/call-simulator/main/version.json', provider: 'mirror' },
+      { name: 'GitHub Raw', url: 'https://raw.githubusercontent.com/xunbaodedashu/call-simulator/main/version.json', provider: 'github' }
+    ];
+    const RELEASE_API_SOURCES = [
+      { name: 'GitCode Releases', url: 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/releases', provider: 'gitcode' },
+      { name: 'GitHub Releases', url: 'https://api.github.com/repos/xunbaodedashu/call-simulator/releases/latest', provider: 'github' }
+    ];
 
     // 自适应全系 iPhone (iPhone 13/14/15/16/17/18 标准版、Pro、Pro Max、Air、Ultra) 及 iOS 16 ~ iOS 27+ 动态视口与灵动岛安全区引擎
     function adaptAllIosGenerations() {
@@ -2212,24 +2237,77 @@
     });
 
     // =====================================================
-    // GitHub 自动扫描更新机制
+    // GitHub + GitCode 多源自动降级扫描更新机制
     // =====================================================
     let latestUpdateInfo = null;
-    async function checkGitHubUpdate(manual = false) {
-      if (manual) showIosToast('正在连接 GitHub 检查更新...');
+    let detectedSourceProvider = 'github';
+
+    async function fetchWithTimeout(url, timeoutMs = 4500) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
-        const res = await fetch(`${GITHUB_VERSION_URL}?t=${Date.now()}`, { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.version && compareVersions(data.version, CURRENT_VERSION) > 0) {
+        const sep = url.includes('?') ? '&' : '?';
+        const res = await fetch(`${url}${sep}_t=${Date.now()}`, {
+          cache: 'no-store',
+          signal: ctrl.signal
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        return JSON.parse(text);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchVersionMultiSource() {
+      // 1. 依次尝试多源 version.json（GitHub Pages -> GitCode API Raw -> jsDelivr -> GHFast -> GitHub Raw）
+      for (const src of VERSION_SOURCES) {
+        try {
+          const data = await fetchWithTimeout(src.url, 4200);
+          if (data && data.version) {
+            detectedSourceProvider = src.provider;
+            data._sourceName = src.name;
+            return data;
+          }
+        } catch (e) {}
+      }
+      // 2. 兜底尝试 GitCode / GitHub Releases API
+      for (const api of RELEASE_API_SOURCES) {
+        try {
+          const raw = await fetchWithTimeout(api.url, 5000);
+          const rel = Array.isArray(raw) ? raw[0] : raw;
+          if (rel && rel.tag_name) {
+            detectedSourceProvider = api.provider;
+            const ver = String(rel.tag_name).replace(/^v/i, '');
+            return {
+              version: ver,
+              notes: rel.name || rel.body || `发现新版本 v${ver}`,
+              iosUrl: 'https://xunbaodedashu.github.io/call-simulator/ios.html',
+              gitcodeIosUrl: `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E5%85%8D%E7%AD%BE%E5%85%A8%E5%B1%8F%E7%89%88.html`,
+              _sourceName: api.name
+            };
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    async function checkGitHubUpdate(manual = false) {
+      if (manual) showIosToast('正在扫描多源更新 (GitHub / GitCode)...');
+      try {
+        const data = await fetchVersionMultiSource();
+        if (data && data.version) {
+          if (compareVersions(data.version, CURRENT_VERSION) > 0) {
             latestUpdateInfo = data;
             const card = document.getElementById('updateAlertCard');
-            document.getElementById('updateAlertTitle').textContent = `🎉 发现新版本 v${data.version}`;
-            document.getElementById('updateAlertDesc').textContent = data.notes || '点击立即同步 GitHub 最新版本';
+            document.getElementById('updateAlertTitle').textContent = `🎉 发现新版本 v${data.version} (${data._sourceName})`;
+            document.getElementById('updateAlertDesc').textContent = data.notes || '点击右侧按钮即可一键自动更新到最新版';
             card.classList.add('show');
-            if (manual) showIosToast(`发现新版本 v${data.version}！`);
+            if (manual) showIosToast(`发现新版本 v${data.version}（来自 ${data._sourceName}）`);
             return;
           }
+          if (manual) showIosToast(`已是最新版 v${CURRENT_VERSION}（节点：${data._sourceName}）`);
+          return;
         }
         if (manual) showIosToast(`当前已是最新版本 v${CURRENT_VERSION}`);
       } catch (e) {
@@ -2247,11 +2325,20 @@
       return 0;
     }
 
-    function applyOnlineUpdate() {
-      const targetUrl = (latestUpdateInfo && latestUpdateInfo.iosUrl)
+    function applyOnlineUpdate(preferChannel = 'auto') {
+      const ver = (latestUpdateInfo && latestUpdateInfo.version) ? latestUpdateInfo.version : CURRENT_VERSION;
+      const gitcodeReleaseUrl = (latestUpdateInfo && latestUpdateInfo.gitcodeMobileconfigUrl)
+        ? latestUpdateInfo.gitcodeMobileconfigUrl
+        : `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87%E5%AE%89%E8%A3%85.mobileconfig`;
+      const githubIosUrl = (latestUpdateInfo && latestUpdateInfo.iosUrl)
         ? `${latestUpdateInfo.iosUrl}?v=${Date.now()}`
         : `https://xunbaodedashu.github.io/call-simulator/ios.html?v=${Date.now()}`;
-      window.location.replace(targetUrl);
+
+      if (preferChannel === 'gitcode' || detectedSourceProvider === 'gitcode') {
+        window.location.href = gitcodeReleaseUrl;
+      } else {
+        window.location.replace(githubIosUrl);
+      }
     }
 
     let iosToastTimer = null;

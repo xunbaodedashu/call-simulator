@@ -1161,20 +1161,23 @@
         <div class="editor-title-wrap">
           <h1>
             <span>模拟来电控制台</span>
-            <span class="ver-tag" id="verTag">v1.3.0</span>
+            <span class="ver-tag" id="verTag">v1.4.0</span>
           </h1>
-          <p>支持挂后台定时弹出来电 · GitHub 自动检测更新</p>
+          <p>支持挂后台定时弹出来电 · GitHub/GitCode 多源自动更新</p>
         </div>
         <span class="brand-badge" onclick="toggleAndroidAbout(true)" style="cursor:pointer;" title="点击查看关于软件">关于 · UCN MQ Z</span>
       </div>
 
-      <!-- GitHub 自动发现新版本升级提示栏 -->
+      <!-- 多源自动发现新版本升级提示栏 -->
       <div class="update-banner" id="updateBanner">
         <div>
-          <h4 id="updateTitle">🎉 发现 GitHub 新版本</h4>
+          <h4 id="updateTitle">🎉 发现新版本</h4>
           <p id="updateDesc">点击右侧按钮即可一键下载或更新最新版</p>
         </div>
-        <button class="update-btn" onclick="triggerGitHubUpgrade()">立即更新</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="update-btn" onclick="triggerGitHubUpgrade('auto')">立即更新</button>
+          <button class="update-btn" style="background:rgba(255,255,255,0.18);" onclick="triggerGitHubUpgrade('gitcode')" title="使用国内 GitCode 镜像直接下载">国内源</button>
+        </div>
       </div>
 
       <!-- 一键进入三界面 + 自定义秒数后台/黑屏定时来电 -->
@@ -1345,11 +1348,11 @@
         </div>
       </div>
 
-      <!-- 音效、震动与 GitHub 自动更新设置 -->
+      <!-- 音效、震动与多源自动更新设置 -->
       <div class="card-panel">
         <div class="card-section-title">
-          <span>声效、防穿帮与 GitHub 更新</span>
-          <span style="color:#60a5fa;cursor:pointer;text-transform:none;" onclick="checkGitHubReleaseUpdate(true)">🔄 检查 GitHub 更新</span>
+          <span>声效、防穿帮与多源更新 (GitHub/GitCode)</span>
+          <span style="color:#60a5fa;cursor:pointer;text-transform:none;" onclick="checkGitHubReleaseUpdate(true)">🔄 检查更新</span>
         </div>
 
         <div class="toggle-row" onclick="toggleSwitch('ringtone')">
@@ -1374,7 +1377,15 @@
         </div>
         <div class="about-row">
           <span>软件版本</span>
-          <span style="color:rgba(255,255,255,0.68);">v1.3.0 (UCN MQ Z)</span>
+          <span style="color:rgba(255,255,255,0.68);">v1.4.0 (UCN MQ Z)</span>
+        </div>
+        <div class="about-row">
+          <span>更新源仓库</span>
+          <span style="font-size:12px;">
+            <a href="https://github.com/xunbaodedashu/call-simulator" target="_blank" style="color:#60a5fa;text-decoration:none;">GitHub</a>
+            <span style="opacity:0.4;"> / </span>
+            <a href="https://gitcode.com/xunbaodedashu/call-simulator" target="_blank" style="color:#4ade80;text-decoration:none;">GitCode 国内镜像</a>
+          </span>
         </div>
         <div class="about-row">
           <span>联系我们</span>
@@ -1648,10 +1659,14 @@
     <div class="about-modal-mask" id="androidAboutModal" onclick="if(event.target===this)toggleAndroidAbout(false)">
       <div class="about-modal-card">
         <div style="font-size:32px;margin-bottom:6px;">📞</div>
-        <h3>模拟来电助手 v1.3.0</h3>
-        <p>UCN MQ Z 专属定制版<br/>支持来电显示 / 已接通 / 未接通三大界面与后台定时弹出</p>
+        <h3>模拟来电助手 v1.4.0</h3>
+        <p>UCN MQ Z 专属定制版<br/>支持来电显示 / 已接通 / 未接通三大界面与后台定时弹出<br/>已内置 GitHub + GitCode 多源自动降级更新</p>
         <div class="about-email-box" onclick="copyAndroidContactEmail()">
           ✉️ 联系我们：bottlezone@163.com
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <a href="https://gitcode.com/xunbaodedashu/call-simulator/releases" target="_blank" class="about-btn" style="background:rgba(34,197,94,0.22);color:#4ade80;font-size:13px;">GitCode 国内源</a>
+          <a href="https://github.com/xunbaodedashu/call-simulator/releases" target="_blank" class="about-btn" style="background:rgba(255,255,255,0.12);font-size:13px;">GitHub 国际源</a>
         </div>
         <div style="display:flex;gap:8px;">
           <a href="mailto:bottlezone@163.com" class="about-btn" style="background:rgba(255,255,255,0.12);">发送邮件</a>
@@ -1662,8 +1677,19 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.3.0';
-    const GITHUB_VERSION_JSON = 'https://xunbaodedashu.github.io/call-simulator/version.json';
+    const APP_VERSION = '1.4.0';
+    // 多源自动降级更新地址池（GitHub Pages -> GitCode API Raw (ACAO:*) -> jsDelivr CDN -> ghfast 镜像 -> GitHub Raw）
+    const VERSION_SOURCES = [
+      { name: 'GitHub Pages', url: 'https://xunbaodedashu.github.io/call-simulator/version.json', provider: 'github' },
+      { name: 'GitCode API', url: 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/version.json?ref=main', provider: 'gitcode' },
+      { name: 'jsDelivr CDN', url: 'https://cdn.jsdelivr.net/gh/xunbaodedashu/call-simulator@main/version.json', provider: 'jsdelivr' },
+      { name: 'GHFast Mirror', url: 'https://ghfast.top/https://raw.githubusercontent.com/xunbaodedashu/call-simulator/main/version.json', provider: 'mirror' },
+      { name: 'GitHub Raw', url: 'https://raw.githubusercontent.com/xunbaodedashu/call-simulator/main/version.json', provider: 'github' }
+    ];
+    const RELEASE_API_SOURCES = [
+      { name: 'GitCode Releases', url: 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/releases', provider: 'gitcode' },
+      { name: 'GitHub Releases', url: 'https://api.github.com/repos/xunbaodedashu/call-simulator/releases/latest', provider: 'github' }
+    ];
 
     const appState = {
       currentScreen: 'editor',
@@ -2181,24 +2207,77 @@
     };
 
     // =====================================================
-    // GitHub 自动扫描更新
+    // GitHub + GitCode 多源自动降级扫描更新
     // =====================================================
     let latestReleaseData = null;
-    async function checkGitHubReleaseUpdate(manual = false) {
-      if (manual) showQuickToast('正在连接 GitHub 扫描最新版本...');
+    let detectedSourceProvider = 'github';
+
+    async function fetchWithTimeout(url, timeoutMs = 4500) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), timeoutMs);
       try {
-        const res = await fetch(`${GITHUB_VERSION_JSON}?t=${Date.now()}`, { cache: 'no-store' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.version && compareVer(data.version, APP_VERSION) > 0) {
+        const sep = url.includes('?') ? '&' : '?';
+        const res = await fetch(`${url}${sep}_t=${Date.now()}`, {
+          cache: 'no-store',
+          signal: ctrl.signal
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        return JSON.parse(text);
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchVersionMultiSource() {
+      // 1. 依次尝试多源 version.json（GitHub Pages -> GitCode API Raw -> jsDelivr -> GHFast -> GitHub Raw）
+      for (const src of VERSION_SOURCES) {
+        try {
+          const data = await fetchWithTimeout(src.url, 4200);
+          if (data && data.version) {
+            detectedSourceProvider = src.provider;
+            data._sourceName = src.name;
+            return data;
+          }
+        } catch (e) {}
+      }
+      // 2. 兜底尝试 GitCode / GitHub Releases API
+      for (const api of RELEASE_API_SOURCES) {
+        try {
+          const raw = await fetchWithTimeout(api.url, 5000);
+          const rel = Array.isArray(raw) ? raw[0] : raw;
+          if (rel && rel.tag_name) {
+            detectedSourceProvider = api.provider;
+            const ver = String(rel.tag_name).replace(/^v/i, '');
+            return {
+              version: ver,
+              notes: rel.name || rel.body || `发现新版本 v${ver}`,
+              apkUrl: `https://github.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`,
+              gitcodeApkUrl: `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`,
+              _sourceName: api.name
+            };
+          }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    async function checkGitHubReleaseUpdate(manual = false) {
+      if (manual) showQuickToast('正在扫描多源更新 (GitHub / GitCode)...');
+      try {
+        const data = await fetchVersionMultiSource();
+        if (data && data.version) {
+          if (compareVer(data.version, APP_VERSION) > 0) {
             latestReleaseData = data;
             const banner = document.getElementById('updateBanner');
-            document.getElementById('updateTitle').textContent = `🎉 发现 GitHub 新版本 v${data.version}`;
+            document.getElementById('updateTitle').textContent = `🎉 发现新版本 v${data.version} (${data._sourceName})`;
             document.getElementById('updateDesc').textContent = data.notes || '点击右侧立即下载安装最新 APK';
             banner.classList.add('show');
-            if (manual) showQuickToast(`发现新版本 v${data.version}！`);
+            if (manual) showQuickToast(`发现新版本 v${data.version}（来自 ${data._sourceName}）`);
             return;
           }
+          if (manual) showQuickToast(`已是最新版 v${APP_VERSION}（节点：${data._sourceName}）`);
+          return;
         }
         if (manual) showQuickToast(`当前已是最新版本 v${APP_VERSION}`);
       } catch (e) {
@@ -2216,14 +2295,23 @@
       return 0;
     }
 
-    function triggerGitHubUpgrade() {
-      const apkUrl = (latestReleaseData && latestReleaseData.apkUrl)
+    function triggerGitHubUpgrade(preferChannel = 'auto') {
+      const ver = (latestReleaseData && latestReleaseData.version) ? latestReleaseData.version : APP_VERSION;
+      const gitcodeUrl = (latestReleaseData && latestReleaseData.gitcodeApkUrl)
+        ? latestReleaseData.gitcodeApkUrl
+        : `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`;
+      const githubUrl = (latestReleaseData && latestReleaseData.apkUrl)
         ? latestReleaseData.apkUrl
-        : 'https://github.com/xunbaodedashu/call-simulator/releases/latest/download/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk';
+        : `https://github.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`;
+
+      const targetApkUrl = (preferChannel === 'gitcode' || detectedSourceProvider === 'gitcode')
+        ? gitcodeUrl
+        : githubUrl;
+
       if (window.AndroidBridge && window.AndroidBridge.openExternalUrl) {
-        window.AndroidBridge.openExternalUrl(apkUrl);
+        window.AndroidBridge.openExternalUrl(targetApkUrl);
       } else {
-        window.location.href = apkUrl;
+        window.location.href = targetApkUrl;
       }
     }
 

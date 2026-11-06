@@ -4,13 +4,16 @@
 
 ---
 
-## 🌐 在线直达链接（GitHub Pages）
+## 🌐 在线直达与双源仓库链接（GitHub + GitCode 自动降级）
 
+- **GitHub 国际仓库**：[https://github.com/xunbaodedashu/call-simulator](https://github.com/xunbaodedashu/call-simulator)
+- **GitCode 国内镜像仓库**：[https://gitcode.com/xunbaodedashu/call-simulator](https://gitcode.com/xunbaodedashu/call-simulator)
 - **导航主页（手机/电脑通用）**：[https://xunbaodedashu.github.io/call-simulator/](https://xunbaodedashu.github.io/call-simulator/)
 - **🍎 iOS 免签全屏版直达**：[https://xunbaodedashu.github.io/call-simulator/ios.html](https://xunbaodedashu.github.io/call-simulator/ios.html)
 - **🤖 安卓版在线预览直达**：[https://xunbaodedashu.github.io/call-simulator/android.html](https://xunbaodedashu.github.io/call-simulator/android.html)
 - **📦 安卓 APK 直接下载**：[点击下载 `模拟来电_UCN_MQ_Z.apk`](./模拟来电_UCN_MQ_Z.apk)（仓库内置，GitHub / GitCode 通用）
 - **📦 历史版本归档**：[GitHub Releases](https://github.com/xunbaodedashu/call-simulator/releases) · [GitCode Releases](https://gitcode.com/xunbaodedashu/call-simulator/releases)
+- **🔄 内置多源自动降级更新机制**：客户端启动或手动检查更新时，自动按 `GitHub Pages` ➔ `GitCode API Raw (api.gitcode.com)` ➔ `jsDelivr CDN` ➔ `GHFast 镜像` ➔ `GitCode/GitHub Releases API` 顺序降级探测最新版本，并提供「立即更新」与「国内源」双通道一键升级。
 
 ---
 
