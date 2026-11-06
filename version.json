@@ -3,11 +3,11 @@
   "releaseDate": "2026-11-06",
   "notes": "v1.5.0：修复安卓与 iOS 挂后台倒计时弹出问题（安卓新增悬浮窗权限引导 + 1x1 透明锚点突破 Android 10~15 后台拉起拦截；iOS 新增单轨 WAV 延时静音+马林巴琴合成流，退到桌面/刷微信到点照常响铃）。",
   "apkUrl": "https://github.com/xunbaodedashu/call-simulator/releases/download/v1.5.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk",
-  "gitcodeApkUrl": "https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v1.5.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk",
+  "gitcodeApkUrl": "https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk?ref=main",
   "iosUrl": "https://xunbaodedashu.github.io/call-simulator/ios.html",
-  "gitcodeIosUrl": "https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v1.5.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E5%85%8D%E7%AD%BE%E5%85%A8%E5%B1%8F%E7%89%88.html",
+  "gitcodeIosUrl": "https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E5%85%8D%E7%AD%BE%E5%85%A8%E5%B1%8F%E7%89%88.html?ref=main",
   "mobileconfigUrl": "https://xunbaodedashu.github.io/call-simulator/ios-install.mobileconfig",
-  "gitcodeMobileconfigUrl": "https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v1.5.0/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87%E5%AE%89%E8%A3%85.mobileconfig",
+  "gitcodeMobileconfigUrl": "https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87%E5%AE%89%E8%A3%85.mobileconfig?ref=main",
   "repoGithub": "https://github.com/xunbaodedashu/call-simulator",
   "repoGitcode": "https://gitcode.com/xunbaodedashu/call-simulator"
 }

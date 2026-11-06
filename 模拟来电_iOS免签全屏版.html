@@ -2438,16 +2438,15 @@
     }
 
     function applyOnlineUpdate(preferChannel = 'auto') {
-      const ver = (latestUpdateInfo && latestUpdateInfo.version) ? latestUpdateInfo.version : CURRENT_VERSION;
-      const gitcodeReleaseUrl = (latestUpdateInfo && latestUpdateInfo.gitcodeMobileconfigUrl)
+      const gitcodeRawMobileconfig = (latestUpdateInfo && latestUpdateInfo.gitcodeMobileconfigUrl)
         ? latestUpdateInfo.gitcodeMobileconfigUrl
-        : `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87%E5%AE%89%E8%A3%85.mobileconfig`;
+        : 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_iOS%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87%E5%AE%89%E8%A3%85.mobileconfig?ref=main';
       const githubIosUrl = (latestUpdateInfo && latestUpdateInfo.iosUrl)
         ? `${latestUpdateInfo.iosUrl}?v=${Date.now()}`
         : `https://xunbaodedashu.github.io/call-simulator/ios.html?v=${Date.now()}`;
 
       if (preferChannel === 'gitcode' || detectedSourceProvider === 'gitcode') {
-        window.location.href = gitcodeReleaseUrl;
+        window.location.href = gitcodeRawMobileconfig;
       } else {
         window.location.replace(githubIosUrl);
       }

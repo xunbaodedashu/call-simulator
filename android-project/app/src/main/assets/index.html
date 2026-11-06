@@ -2334,7 +2334,7 @@
       const ver = (latestReleaseData && latestReleaseData.version) ? latestReleaseData.version : APP_VERSION;
       const gitcodeUrl = (latestReleaseData && latestReleaseData.gitcodeApkUrl)
         ? latestReleaseData.gitcodeApkUrl
-        : `https://gitcode.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`;
+        : 'https://api.gitcode.com/api/v5/repos/xunbaodedashu/call-simulator/raw/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk?ref=main';
       const githubUrl = (latestReleaseData && latestReleaseData.apkUrl)
         ? latestReleaseData.apkUrl
         : `https://github.com/xunbaodedashu/call-simulator/releases/download/v${ver}/%E6%A8%A1%E6%8B%9F%E6%9D%A5%E7%94%B5_UCN_MQ_Z.apk`;
