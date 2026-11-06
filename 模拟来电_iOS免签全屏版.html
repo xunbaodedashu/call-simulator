@@ -1192,7 +1192,7 @@
         <div>
           <h1>
             <span>iOS 模拟来电</span>
-            <span class="ver-pill" id="appVersionBadge">v1.4.0</span>
+            <span class="ver-pill" id="appVersionBadge">v1.5.0</span>
           </h1>
           <p id="deviceAdaptLabel">全机型自适应 · 支持 iPhone 13~18 系列 & iOS 16~27+</p>
         </div>
@@ -1266,19 +1266,24 @@
 
           <div class="schedule-btn-grid">
             <button class="sched-btn primary-sched" onclick="startScheduledCall('background')">
-              <span>📲 挂后台/桌面定时来电</span>
-              <span class="sub">前台正常玩手机，到点弹出来电</span>
+              <span>📲 挂后台/切其他APP来电</span>
+              <span class="sub">退回真桌面/刷微信，到点响铃提醒</span>
             </button>
-            <button class="sched-btn" onclick="startScheduledCall('blackout')">
-              <span>🌑 息屏黑屏定时来电</span>
-              <span class="sub">纯黑锁屏待机，到点亮屏响铃</span>
+            <button class="sched-btn" onclick="startScheduledCall('fakehome')">
+              <span>📱 伪装桌面待机弹出</span>
+              <span class="sub">停留高仿桌面，到点100%自动弹窗</span>
+            </button>
+          </div>
+          <div style="margin-top:8px;">
+            <button class="sched-btn" style="width:100%;padding:8px;" onclick="startScheduledCall('blackout')">
+              <span>🌑 息屏纯黑待机定时来电（到点自动亮屏弹出）</span>
             </button>
           </div>
 
           <!-- 后台倒计时状态条 -->
           <div class="bg-running-bar" id="bgRunningBar">
-            <span id="bgRunningText">⏳ 已挂载倒计时：5 秒后弹出...</span>
-            <span style="text-decoration:underline;cursor:pointer;" onclick="cancelScheduledCall()">取消</span>
+            <span id="bgRunningText">⏳ 后台倒计时已启动：现在可退回手机真桌面或打开微信...</span>
+            <span style="text-decoration:underline;cursor:pointer;margin-left:8px;flex-shrink:0;" onclick="cancelScheduledCall()">取消</span>
           </div>
         </div>
       </div>
@@ -1403,7 +1408,7 @@
         </div>
         <div class="about-info-row">
           <span>软件版本</span>
-          <span style="color:rgba(255,255,255,0.65);">v1.4.0 (UCN MQ Z)</span>
+          <span style="color:rgba(255,255,255,0.65);">v1.5.0 (UCN MQ Z)</span>
         </div>
         <div class="about-info-row">
           <span>更新源仓库</span>
@@ -1679,7 +1684,7 @@
     <div class="about-modal-backdrop" id="aboutModal" onclick="if(event.target===this)toggleAboutModal(false)">
       <div class="about-modal-box">
         <div style="font-size:32px;margin-bottom:6px;">📞</div>
-        <h3>模拟来电助手 v1.4.0</h3>
+        <h3>模拟来电助手 v1.5.0</h3>
         <p>UCN MQ Z 专属定制版<br/>支持 iPhone 全系列 (13~18 Pro Max/Ultra) 与 iOS 16~27+ 及安卓双平台全屏模拟<br/>已内置 GitHub + GitCode 多源自动降级更新</p>
         <div class="about-email-pill" onclick="copyContactEmail()">
           <span>✉️ 联系我们：bottlezone@163.com</span>
@@ -1697,7 +1702,7 @@
   </div>
 
   <script>
-    const CURRENT_VERSION = '1.4.0';
+    const CURRENT_VERSION = '1.5.0';
     // 多源自动降级更新地址池（GitHub Pages -> GitCode API Raw (ACAO:*) -> jsDelivr CDN -> ghfast 镜像 -> GitHub Raw）
     const VERSION_SOURCES = [
       { name: 'GitHub Pages', url: 'https://xunbaodedashu.github.io/call-simulator/version.json', provider: 'github' },
@@ -1863,7 +1868,128 @@
       showIosToast('向右滑动滑块即可接听');
     }
 
-    // 合成 iPhone 经典马林巴琴 (Marimba) 音色与后台保活静音轨
+    // 合成 iPhone 经典马林巴琴 (Marimba) 音色与 iOS 后台 HTML5 <audio> WAV 保活流
+    // （iOS 退回真桌面或切去微信时，WebAudio setInterval 会被系统冻结，只有 HTML5 <audio> 持续播放 WAV 流才能让 iOS 后台不休眠并在到点时直接响起马林巴琴铃声！）
+    let bgAudioPlayer = null;
+
+    function buildScheduledWavBlobUrl(delaySeconds, ringEnabled) {
+      const sampleRate = 8000;
+      const ringLoopSec = 20;
+      const totalSec = Math.min(Math.max(1, delaySeconds) + ringLoopSec, 660);
+      const numSamples = totalSec * sampleRate;
+      const buffer = new ArrayBuffer(44 + numSamples * 2);
+      const view = new DataView(buffer);
+
+      function writeStr(offset, str) {
+        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+      }
+      writeStr(0, 'RIFF');
+      view.setUint32(4, 36 + numSamples * 2, true);
+      writeStr(8, 'WAVE');
+      writeStr(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, 'data');
+      view.setUint32(40, numSamples * 2, true);
+
+      const silentSamples = Math.floor(delaySeconds * sampleRate);
+      for (let i = 0; i < silentSamples; i++) {
+        view.setInt16(44 + i * 2, (i % 2 === 0) ? 1 : -1, true);
+      }
+
+      if (ringEnabled) {
+        const pattern = [
+          { f: 493.88, t: 0.00 },
+          { f: 415.30, t: 0.15 },
+          { f: 659.25, t: 0.30 },
+          { f: 493.88, t: 0.45 },
+          { f: 415.30, t: 0.60 },
+          { f: 659.25, t: 0.75 },
+          { f: 739.99, t: 0.92 },
+          { f: 659.25, t: 1.12 }
+        ];
+        const cycleSamples = Math.floor(2.4 * sampleRate);
+        for (let i = silentSamples; i < numSamples; i++) {
+          const posInCycle = (i - silentSamples) % cycleSamples;
+          const secInCycle = posInCycle / sampleRate;
+          let sampleVal = 0;
+          for (let k = 0; k < pattern.length; k++) {
+            const dt = secInCycle - pattern[k].t;
+            if (dt >= 0 && dt < 0.16) {
+              const env = Math.exp(-dt * 18);
+              sampleVal += Math.sin(2 * Math.PI * pattern[k].f * dt) * env * 0.42;
+            }
+          }
+          const pcm = Math.max(-32767, Math.min(32767, Math.floor(sampleVal * 32767)));
+          view.setInt16(44 + i * 2, pcm, true);
+        }
+      }
+
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      return URL.createObjectURL(blob);
+    }
+
+    function startBackgroundAudioKeepAlive(delaySec = 5) {
+      stopBackgroundAudioKeepAlive();
+      try {
+        const wavUrl = buildScheduledWavBlobUrl(delaySec, iosState.ringEnabled);
+        bgAudioPlayer = new Audio(wavUrl);
+        bgAudioPlayer.setAttribute('playsinline', 'true');
+        const caller = document.getElementById('iosName').value.trim() || document.getElementById('iosPhone').value.trim() || '未知号码';
+        const loc = document.getElementById('iosLocation').value.trim() || '移动电话';
+        if ('mediaSession' in navigator) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: `📞 来电：${caller}`,
+            artist: loc,
+            album: '模拟来电'
+          });
+        }
+        bgAudioPlayer.addEventListener('timeupdate', () => {
+          if (bgAudioPlayer && bgAudioPlayer.currentTime >= delaySec && iosState.schedTargetTime > 0) {
+            iosState.schedTargetTime = 0;
+            if (iosState.schedTickInt) {
+              clearInterval(iosState.schedTickInt);
+              iosState.schedTickInt = null;
+            }
+            document.getElementById('iosBlackout').classList.remove('active');
+            document.getElementById('fakeHomeMask').classList.remove('active');
+            document.getElementById('bgRunningBar').classList.remove('show');
+            if (!document.hidden) {
+              stopBackgroundAudioKeepAlive();
+              enterIosScreen('incoming');
+            } else {
+              // 处于 iOS 后台：保持 bgAudioPlayer 继续响铃，并把 DOM 切到 incoming 等待用户点横幅/灵动岛切回
+              syncIosData();
+              iosState.screen = 'incoming';
+              document.querySelectorAll('.screen-view').forEach(el => el.classList.remove('active'));
+              document.getElementById('view-incoming').classList.add('active');
+              if ('Notification' in window && Notification.permission === 'granted') {
+                try {
+                  new Notification(`📞 ${caller}`, { body: `${loc} · 来电响铃中，轻点接听`, tag: 'ios-call' });
+                } catch (e) {}
+              }
+            }
+          }
+        });
+        bgAudioPlayer.play().catch(() => {});
+      } catch (e) {}
+    }
+
+    function stopBackgroundAudioKeepAlive() {
+      try {
+        if (bgAudioPlayer) {
+          bgAudioPlayer.pause();
+          if (bgAudioPlayer.src) URL.revokeObjectURL(bgAudioPlayer.src);
+          bgAudioPlayer = null;
+        }
+      } catch (e) {}
+    }
+
     function getAudioCtx() {
       if (!iosState.audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -1873,31 +1999,6 @@
         iosState.audioCtx.resume();
       }
       return iosState.audioCtx;
-    }
-
-    // 保持 iOS 切后台时 AudioContext 不断开（播放微弱静音脉冲）
-    function startBackgroundAudioKeepAlive() {
-      try {
-        const ctx = getAudioCtx();
-        if (!ctx) return;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        gain.gain.value = 0.0001;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        iosState.silentKeepAliveAudio = osc;
-      } catch (e) {}
-    }
-
-    function stopBackgroundAudioKeepAlive() {
-      try {
-        if (iosState.silentKeepAliveAudio) {
-          iosState.silentKeepAliveAudio.stop();
-          iosState.silentKeepAliveAudio.disconnect();
-          iosState.silentKeepAliveAudio = null;
-        }
-      } catch (e) {}
     }
 
     function playIosMarimbaRiff() {
@@ -2178,13 +2279,15 @@
       syncIosData();
       getAudioCtx();
       requestScreenWakeLock();
-      startBackgroundAudioKeepAlive();
+
+      const sec = Math.max(1, parseInt(document.getElementById('customDelaySec').value, 10) || 5);
+      // 启动内嵌延迟秒数的 HTML5 WAV 保活与定时响铃音轨（退回 iPhone 真桌面或切去微信后，到点依然会准时响起马林巴琴铃声并显示灵动岛/锁屏来电卡片）
+      startBackgroundAudioKeepAlive(sec);
 
       if ('Notification' in window && Notification.permission === 'default') {
         try { await Notification.requestPermission(); } catch (e) {}
       }
 
-      const sec = Math.max(1, parseInt(document.getElementById('customDelaySec').value, 10) || 5);
       iosState.schedTargetTime = Date.now() + sec * 1000;
 
       if (mode === 'blackout') {
@@ -2196,11 +2299,14 @@
         setTimeout(() => {
           if (mask.classList.contains('active')) txt.style.opacity = '0.02';
         }, 1400);
-      } else {
-        // 挂后台 / 桌面待机模式：展示拟真桌面（用户也可直接切去微信/桌面，基于时间戳 + 后台音频保活在到点时响铃）
+      } else if (mode === 'fakehome') {
         document.getElementById('fakeHomeMask').classList.add('active');
         document.getElementById('bgRunningBar').classList.add('show');
-        showIosToast(`已启动 ${sec} 秒倒计时（可停留此桌面或切后台）`);
+        showIosToast(`已进入伪装桌面：${sec} 秒后自动弹出全屏来电`);
+      } else {
+        // 挂后台/切其他 APP 模式：用户可自由按 Home 手势退回 iPhone 真桌面或打开微信，WAV 音轨在后台保活并在到点时直接响铃 + 推送通知
+        document.getElementById('bgRunningBar').classList.add('show');
+        showIosToast(`已挂载 ${sec} 秒后台来电：现在可退回桌面或打开微信`);
       }
 
       iosState.schedTickInt = setInterval(() => {
@@ -2210,7 +2316,7 @@
           cancelScheduledCall();
           enterIosScreen('incoming');
         } else {
-          document.getElementById('bgRunningText').textContent = `⏳ 倒计时进行中：${remainSec} 秒后弹出...`;
+          document.getElementById('bgRunningText').textContent = `⏳ 后台来电倒计时：${remainSec} 秒后响铃（可退回真桌面/切微信）`;
           document.getElementById('iosBlackoutText').textContent = `息屏待机中 · ${remainSec} 秒后来电`;
         }
       }, 250);
@@ -2228,11 +2334,17 @@
       document.getElementById('bgRunningBar').classList.remove('show');
     }
 
-    // 当用户从别的 APP 切回时，若已到达设定时间立即弹出来电
+    // 当用户从微信/真桌面切回本应用时：
+    // 如果后台 WAV 已经响铃（iosState.screen === 'incoming'）或已到达设定时间，立即切换为前台交互响铃态
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && iosState.schedTargetTime > 0 && Date.now() >= iosState.schedTargetTime) {
-        cancelScheduledCall();
-        enterIosScreen('incoming');
+      if (!document.hidden) {
+        if (iosState.schedTargetTime > 0 && Date.now() >= iosState.schedTargetTime) {
+          cancelScheduledCall();
+          enterIosScreen('incoming');
+        } else if (iosState.screen === 'incoming' && bgAudioPlayer) {
+          stopBackgroundAudioKeepAlive();
+          enterIosScreen('incoming');
+        }
       }
     });
 
@@ -2436,7 +2548,11 @@
     loadIosConfig();
     applyFakeStatusBarState();
     syncIosData();
-    // 启动时自动连接 GitHub 扫描新版本
+    // 支持 URL 参数 ?call=1 或 #incoming 一键直达来电显示界面（方便配合 iOS 快捷指令从任意 APP 自动跳回全屏来电）
+    if (location.search.includes('call=1') || location.hash === '#incoming') {
+      setTimeout(() => enterIosScreen('incoming'), 150);
+    }
+    // 启动时自动连接 GitHub / GitCode 扫描新版本
     setTimeout(() => checkGitHubUpdate(false), 1200);
   </script>
 </body>

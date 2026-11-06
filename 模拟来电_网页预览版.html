@@ -1161,7 +1161,7 @@
         <div class="editor-title-wrap">
           <h1>
             <span>模拟来电控制台</span>
-            <span class="ver-tag" id="verTag">v1.4.0</span>
+            <span class="ver-tag" id="verTag">v1.5.0</span>
           </h1>
           <p>支持挂后台定时弹出来电 · GitHub/GitCode 多源自动更新</p>
         </div>
@@ -1218,6 +1218,7 @@
         <div class="custom-timer-section">
           <div class="form-label" style="margin-bottom:7px;">
             <span>⏱ 自定义多少秒后来电话（可挂后台正常玩手机）</span>
+            <span class="hint" id="overlayPermTag" onclick="openAndroidOverlayPerm()" style="color:#fbbf24;cursor:pointer;display:none;">⚠️ 点此开启「悬浮窗权限」确保后台必弹</span>
           </div>
           <div class="custom-sec-bar">
             <input type="number" id="inputCustomDelaySec" class="custom-sec-input" value="5" min="1" max="3600" />
@@ -1377,7 +1378,7 @@
         </div>
         <div class="about-row">
           <span>软件版本</span>
-          <span style="color:rgba(255,255,255,0.68);">v1.4.0 (UCN MQ Z)</span>
+          <span style="color:rgba(255,255,255,0.68);">v1.5.0 (UCN MQ Z)</span>
         </div>
         <div class="about-row">
           <span>更新源仓库</span>
@@ -1659,7 +1660,7 @@
     <div class="about-modal-mask" id="androidAboutModal" onclick="if(event.target===this)toggleAndroidAbout(false)">
       <div class="about-modal-card">
         <div style="font-size:32px;margin-bottom:6px;">📞</div>
-        <h3>模拟来电助手 v1.4.0</h3>
+        <h3>模拟来电助手 v1.5.0</h3>
         <p>UCN MQ Z 专属定制版<br/>支持来电显示 / 已接通 / 未接通三大界面与后台定时弹出<br/>已内置 GitHub + GitCode 多源自动降级更新</p>
         <div class="about-email-box" onclick="copyAndroidContactEmail()">
           ✉️ 联系我们：bottlezone@163.com
@@ -1677,7 +1678,7 @@
   </div>
 
   <script>
-    const APP_VERSION = '1.4.0';
+    const APP_VERSION = '1.5.0';
     // 多源自动降级更新地址池（GitHub Pages -> GitCode API Raw (ACAO:*) -> jsDelivr CDN -> ghfast 镜像 -> GitHub Raw）
     const VERSION_SOURCES = [
       { name: 'GitHub Pages', url: 'https://xunbaodedashu.github.io/call-simulator/version.json', provider: 'github' },
@@ -2138,6 +2139,33 @@
     // =====================================================
     // 自定义秒数定时来电（挂后台自动拉起 + 息屏黑屏待机）
     // =====================================================
+    function checkAndroidOverlayStatus() {
+      const tag = document.getElementById('overlayPermTag');
+      if (!tag) return;
+      if (window.AndroidBridge && typeof window.AndroidBridge.hasOverlayPermission === 'function') {
+        const ok = window.AndroidBridge.hasOverlayPermission();
+        tag.style.display = 'inline';
+        if (ok) {
+          tag.textContent = '✅ 悬浮窗后台弹出权限已就绪';
+          tag.style.color = '#4ade80';
+        } else {
+          tag.textContent = '⚠️ 点此开启「悬浮窗权限」确保后台必弹';
+          tag.style.color = '#fbbf24';
+        }
+      }
+    }
+    window.addEventListener('focus', checkAndroidOverlayStatus);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkAndroidOverlayStatus();
+    });
+
+    function openAndroidOverlayPerm() {
+      if (window.AndroidBridge && window.AndroidBridge.requestOverlayPermission) {
+        showQuickToast('请开启「允许显示在其他应用上层」后返回');
+        window.AndroidBridge.requestOverlayPermission();
+      }
+    }
+
     function setCustomDelaySec(sec) {
       document.getElementById('inputCustomDelaySec').value = sec;
       document.querySelectorAll('.sec-pill').forEach(el => {
@@ -2164,11 +2192,18 @@
           if (overlay.classList.contains('active')) textEl.style.opacity = '0.02';
         }, 1500);
       } else {
-        // 挂后台模式：如果跑在原生 Android APK 中，调用 AndroidBridge 自动退到桌面并在指定秒数后把 Activity 拉回最前端弹出！
+        // 挂后台模式：在安卓 APK 中先检查「显示在其他应用上层」权限（Android 10~15 后台拉起界面必备）
+        if (window.AndroidBridge && typeof window.AndroidBridge.hasOverlayPermission === 'function') {
+          if (!window.AndroidBridge.hasOverlayPermission()) {
+            showQuickToast('首次使用后台弹出，请先开启「悬浮窗权限」');
+            setTimeout(() => window.AndroidBridge.requestOverlayPermission(), 600);
+            return;
+          }
+        }
         document.getElementById('bgCountdownStrip').classList.add('show');
         if (window.AndroidBridge && window.AndroidBridge.scheduleBackgroundCall) {
           window.AndroidBridge.scheduleBackgroundCall(seconds);
-          showQuickToast(`已挂入后台：${seconds} 秒后将自动弹出全屏来电！`);
+          showQuickToast(`已挂入后台：${seconds} 秒后自动弹出全屏来电！`);
         } else {
           showQuickToast(`已启动 ${seconds} 秒倒计时，到点自动弹出来电`);
         }
@@ -2374,6 +2409,7 @@
 
     loadConfigFromStorage();
     syncCallerInfoToScreens();
+    checkAndroidOverlayStatus();
     setTimeout(() => checkGitHubReleaseUpdate(false), 1200);
   </script>
 </body>

@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ucnmqz.callsimulator"
-    android:versionCode="5"
-    android:versionName="1.4.0">
+    android:versionCode="6"
+    android:versionName="1.5.0">
 
     <uses-sdk
         android:minSdkVersion="24"
         android:targetSdkVersion="34" />
 
-    <!-- 网络权限（用于自动连接 GitHub 扫描最新版本与在线更新） -->
+    <!-- 网络权限（用于自动连接 GitHub / GitCode 扫描最新版本与在线更新） -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- 手机真实来电震动、屏幕唤醒与后台前置唤醒权限 -->
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- 关键权限：允许在其他应用上层显示（突破 Android 10~15 后台拉起界面拦截） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
